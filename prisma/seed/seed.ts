@@ -1,160 +1,99 @@
 /**
  * MerQent Production Database Seed Script
- * Populates controlled taxonomies: Industries, ERPs, Accounting Systems, Deal Types, Integration Types, and PMI Tasks.
- * Grounded in PostgreSQL and Prisma ORM.
+ * Populates controlled taxonomies in TaxonomyTerm matching prisma/schema.prisma:
+ * Categories: INDUSTRY, ERP_SYSTEM, ACCOUNTING_SYSTEM, DEAL_TYPE, INTEGRATION_DISCIPLINE, PMI_TASK.
  */
 
-import { PrismaClient, SystemRole, VerificationTier } from '@prisma/client';
+import { PrismaClient, TaxonomyCategory } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const INDUSTRIES = [
-  { name: 'Healthcare & Life Sciences', slug: 'healthcare-life-sciences', category: 'Healthcare' },
-  { name: 'Software & Technology (SaaS)', slug: 'software-technology-saas', category: 'Technology' },
-  { name: 'Manufacturing & Industrials', slug: 'manufacturing-industrials', category: 'Industrials' },
-  { name: 'Financial Services & FinTech', slug: 'financial-services-fintech', category: 'Financial Services' },
-  { name: 'Consumer & Retail', slug: 'consumer-retail', category: 'Consumer' },
-  { name: 'Business Services & Logistics', slug: 'business-services-logistics', category: 'Business Services' },
-  { name: 'Energy & Infrastructure', slug: 'energy-infrastructure', category: 'Energy' },
-];
+interface SeedTerm {
+  category: TaxonomyCategory;
+  code: string;
+  name: string;
+  description?: string;
+}
 
-const ERP_SYSTEMS = [
-  { name: 'SAP S/4HANA', vendor: 'SAP', tier: 'Enterprise' },
-  { name: 'SAP Business One', vendor: 'SAP', tier: 'Mid-Market' },
-  { name: 'Oracle NetSuite', vendor: 'Oracle', tier: 'Cloud ERP' },
-  { name: 'Oracle Cloud ERP (Fusion)', vendor: 'Oracle', tier: 'Enterprise' },
-  { name: 'Microsoft Dynamics 365 Finance & Operations', vendor: 'Microsoft', tier: 'Enterprise' },
-  { name: 'Microsoft Dynamics 365 Business Central', vendor: 'Microsoft', tier: 'Mid-Market' },
-  { name: 'Workday Financial Management', vendor: 'Workday', tier: 'Enterprise' },
-  { name: 'Infor CloudSuite', vendor: 'Infor', tier: 'Enterprise' },
-  { name: 'Epicor ERP', vendor: 'Epicor', tier: 'Manufacturing' },
-  { name: 'Sage Intacct', vendor: 'Sage', tier: 'Mid-Market' },
-];
+const TAXONOMY_TERMS: SeedTerm[] = [
+  // 1. Industries
+  { category: TaxonomyCategory.INDUSTRY, code: 'IND_HEALTHCARE', name: 'Healthcare & Life Sciences', description: 'Hospitals, medical devices, pharmaceuticals, biotech' },
+  { category: TaxonomyCategory.INDUSTRY, code: 'IND_TECH_SAAS', name: 'Software & Technology (SaaS)', description: 'Enterprise software, B2B SaaS, cloud infrastructure' },
+  { category: TaxonomyCategory.INDUSTRY, code: 'IND_MANUFACTURING', name: 'Manufacturing & Industrials', description: 'Engineered products, automotive supply, industrial automation' },
+  { category: TaxonomyCategory.INDUSTRY, code: 'IND_FINANCIAL', name: 'Financial Services & FinTech', description: 'Asset management, banking tech, payment processing' },
+  { category: TaxonomyCategory.INDUSTRY, code: 'IND_CONSUMER', name: 'Consumer & Retail', description: 'DTC, omni-channel retail, food & beverage' },
+  { category: TaxonomyCategory.INDUSTRY, code: 'IND_LOGISTICS', name: 'Business Services & Logistics', description: '3PL, freight, facility management, B2B outsourced services' },
+  { category: TaxonomyCategory.INDUSTRY, code: 'IND_ENERGY', name: 'Energy & Infrastructure', description: 'Renewables, utility services, telecommunications' },
 
-const ACCOUNTING_SYSTEMS = [
-  { name: 'BlackLine (Financial Close)', vendor: 'BlackLine', category: 'Close Management' },
-  { name: 'FloQast', vendor: 'FloQast', category: 'Close Management' },
-  { name: 'OneStream Software', vendor: 'OneStream', category: 'CPM / Consolidation' },
-  { name: 'Oracle Hyperion / FCCS', vendor: 'Oracle', category: 'CPM / Consolidation' },
-  { name: 'QuickBooks Enterprise', vendor: 'Intuit', category: 'SMB Accounting' },
-  { name: 'Sage Intacct Accounting', vendor: 'Sage', category: 'Mid-Market' },
-  { name: 'Xero Accounting', vendor: 'Xero', category: 'SMB Accounting' },
-];
+  // 2. ERP Systems
+  { category: TaxonomyCategory.ERP_SYSTEM, code: 'ERP_SAP_S4HANA', name: 'SAP S/4HANA', description: 'Tier 1 Enterprise ERP suite' },
+  { category: TaxonomyCategory.ERP_SYSTEM, code: 'ERP_SAP_B1', name: 'SAP Business One', description: 'Tier 2 Mid-market ERP suite' },
+  { category: TaxonomyCategory.ERP_SYSTEM, code: 'ERP_ORACLE_NETSUITE', name: 'Oracle NetSuite', description: 'Cloud ERP for fast-growing and mid-market enterprises' },
+  { category: TaxonomyCategory.ERP_SYSTEM, code: 'ERP_ORACLE_FUSION', name: 'Oracle Cloud ERP (Fusion)', description: 'Tier 1 Enterprise financial and operational ERP' },
+  { category: TaxonomyCategory.ERP_SYSTEM, code: 'ERP_MS_D365_FO', name: 'Microsoft Dynamics 365 Finance & Operations', description: 'Tier 1 Enterprise operational and supply chain ERP' },
+  { category: TaxonomyCategory.ERP_SYSTEM, code: 'ERP_MS_D365_BC', name: 'Microsoft Dynamics 365 Business Central', description: 'Tier 2 Mid-market operational ERP' },
+  { category: TaxonomyCategory.ERP_SYSTEM, code: 'ERP_WORKDAY_FIN', name: 'Workday Financial Management', description: 'Cloud financial management and planning' },
+  { category: TaxonomyCategory.ERP_SYSTEM, code: 'ERP_INFOR_CS', name: 'Infor CloudSuite', description: 'Specialized enterprise industrial ERP' },
+  { category: TaxonomyCategory.ERP_SYSTEM, code: 'ERP_EPICOR', name: 'Epicor ERP', description: 'Mid-market manufacturing & distribution ERP' },
+  { category: TaxonomyCategory.ERP_SYSTEM, code: 'ERP_SAGE_INTACCT', name: 'Sage Intacct', description: 'Cloud financial management system' },
 
-const DEAL_TYPES = [
-  { name: 'Platform Acquisition', code: 'PLATFORM', description: 'Initial platform investment by private equity sponsor' },
-  { name: 'Add-on / Bolt-on Acquisition', code: 'ADD_ON', description: 'Strategic tuck-in acquisition integrated into existing platform' },
-  { name: 'Corporate Carve-out / Divestiture', code: 'CARVE_OUT', description: 'Separation and standalone operationalization of a business unit' },
-  { name: 'Merger of Equals', code: 'MERGER_OF_EQUALS', description: 'Direct operational merger of two comparable scale organizations' },
-  { name: 'Cross-Border Acquisition', code: 'CROSS_BORDER', description: 'International acquisition involving multi-jurisdiction regulatory & tax integration' },
-];
+  // 3. Accounting Systems
+  { category: TaxonomyCategory.ACCOUNTING_SYSTEM, code: 'ACC_BLACKLINE', name: 'BlackLine', description: 'Financial close management and account reconciliation' },
+  { category: TaxonomyCategory.ACCOUNTING_SYSTEM, code: 'ACC_FLOQAST', name: 'FloQast', description: 'Accounting workflow automation and close management' },
+  { category: TaxonomyCategory.ACCOUNTING_SYSTEM, code: 'ACC_ONESTREAM', name: 'OneStream Software', description: 'Corporate performance management (CPM) and financial consolidation' },
+  { category: TaxonomyCategory.ACCOUNTING_SYSTEM, code: 'ACC_ORACLE_FCCS', name: 'Oracle Hyperion / FCCS', description: 'Financial consolidation and close service' },
+  { category: TaxonomyCategory.ACCOUNTING_SYSTEM, code: 'ACC_QUICKBOOKS_ENT', name: 'QuickBooks Enterprise', description: 'SMB accounting and inventory management' },
+  { category: TaxonomyCategory.ACCOUNTING_SYSTEM, code: 'ACC_XERO', name: 'Xero Accounting', description: 'Cloud SMB accounting software' },
 
-const INTEGRATION_TYPES = [
-  { name: 'Full Operational Integration', code: 'FULL_INTEGRATION', description: 'Comprehensive consolidation of ERP, finance, sales, IT, and HR' },
-  { name: 'Back-Office / Shared Services Only', code: 'BACK_OFFICE_ONLY', description: 'Financial consolidation, reporting, payroll, and shared infrastructure' },
-  { name: 'Autonomous / Holding Co Governance', code: 'HOLD_CO_GOVERNANCE', description: 'Decentralized operational model with executive oversight and financial reporting' },
-  { name: 'Carve-Out Transition (TSA Exit)', code: 'TSA_EXIT', description: 'Transition Service Agreement standup, migration, and vendor replacement' },
-];
+  // 4. Deal Types
+  { category: TaxonomyCategory.DEAL_TYPE, code: 'DEAL_PLATFORM', name: 'Platform Acquisition', description: 'Initial platform investment by private equity sponsor' },
+  { category: TaxonomyCategory.DEAL_TYPE, code: 'DEAL_ADD_ON', name: 'Add-on / Bolt-on Acquisition', description: 'Strategic tuck-in acquisition integrated into existing platform company' },
+  { category: TaxonomyCategory.DEAL_TYPE, code: 'DEAL_CARVE_OUT', name: 'Corporate Carve-out / Divestiture', description: 'Separation and standalone operationalization of a business unit' },
+  { category: TaxonomyCategory.DEAL_TYPE, code: 'DEAL_MERGER_OF_EQUALS', name: 'Merger of Equals', description: 'Direct operational merger of two comparable scale organizations' },
+  { category: TaxonomyCategory.DEAL_TYPE, code: 'DEAL_CROSS_BORDER', name: 'Cross-Border Acquisition', description: 'International acquisition involving multi-jurisdiction regulatory & tax integration' },
 
-const PMI_TASKS = [
-  { name: 'Day 1 Readiness & Executive Playbook', category: 'Governance' },
-  { name: '100-Day Integration Execution', category: 'Execution' },
-  { name: 'Chart of Accounts (COA) Harmonization', category: 'Finance & Accounting' },
-  { name: 'ERP Migration & System Cutover', category: 'IT & Systems' },
-  { name: 'Billing & Revenue Recognition Unification', category: 'Finance & Accounting' },
-  { name: 'Executive Team Assessment & Culture Alignment', category: 'People & Culture' },
-  { name: 'Vendor Rationalization & Procurement Synergy', category: 'Operations' },
-  { name: 'Sales Pipeline & CRM Consolidation', category: 'Commercial' },
-  { name: 'IT Infrastructure & Cyber Diligence Hardening', category: 'IT & Systems' },
+  // 5. Integration Disciplines
+  { category: TaxonomyCategory.INTEGRATION_DISCIPLINE, code: 'DISC_FULL_INTEGRATION', name: 'Full Operational Integration', description: 'Comprehensive consolidation of ERP, finance, sales, IT, and HR' },
+  { category: TaxonomyCategory.INTEGRATION_DISCIPLINE, code: 'DISC_BACK_OFFICE', name: 'Back-Office / Shared Services Only', description: 'Financial consolidation, reporting, payroll, and shared infrastructure' },
+  { category: TaxonomyCategory.INTEGRATION_DISCIPLINE, code: 'DISC_HOLD_CO', name: 'Autonomous / Holding Co Governance', description: 'Decentralized operational model with executive oversight and financial reporting' },
+  { category: TaxonomyCategory.INTEGRATION_DISCIPLINE, code: 'DISC_TSA_EXIT', name: 'Carve-Out Transition (TSA Exit)', description: 'Transition Service Agreement standup, migration, and vendor replacement' },
+
+  // 6. PMI Tasks
+  { category: TaxonomyCategory.PMI_TASK, code: 'TASK_DAY_1_READINESS', name: 'Day 1 Readiness & Executive Playbook', description: 'Operational continuity and executive leadership on transaction close' },
+  { category: TaxonomyCategory.PMI_TASK, code: 'TASK_100_DAY_PLAN', name: '100-Day Integration Execution', description: 'Synergy roadmap delivery and prioritized workstream tracking' },
+  { category: TaxonomyCategory.PMI_TASK, code: 'TASK_COA_HARMONIZATION', name: 'Chart of Accounts (COA) Harmonization', description: 'Unifying ledger structures and revenue recognition standards' },
+  { category: TaxonomyCategory.PMI_TASK, code: 'TASK_ERP_CUTOVER', name: 'ERP Migration & System Cutover', description: 'Data migration, interface integration, and go-live cutover governance' },
+  { category: TaxonomyCategory.PMI_TASK, code: 'TASK_CULTURE_ALIGNMENT', name: 'Executive Team & Culture Alignment', description: 'Retention planning, leadership assessment, and cultural integration' },
+  { category: TaxonomyCategory.PMI_TASK, code: 'TASK_VENDOR_SYNERGIES', name: 'Vendor Rationalization & Procurement Synergy', description: 'Contract renegotiation, supplier consolidation, and direct cost savings' },
+  { category: TaxonomyCategory.PMI_TASK, code: 'TASK_IT_HARDENING', name: 'IT Infrastructure & Cyber Diligence Hardening', description: 'Network consolidation, cybersecurity remediation, and cloud migration' },
 ];
 
 async function main() {
   console.log('🌱 Starting MerQent Database Taxonomy Seed...');
 
-  // 1. Seed Industries
-  for (const item of INDUSTRIES) {
-    await prisma.industryTaxonomy.upsert({
-      where: { slug: item.slug },
-      update: {},
+  let count = 0;
+  for (const term of TAXONOMY_TERMS) {
+    await prisma.taxonomyTerm.upsert({
+      where: { code: term.code },
+      update: {
+        name: term.name,
+        category: term.category,
+        description: term.description,
+        isActive: true,
+      },
       create: {
-        name: item.name,
-        slug: item.slug,
-        category: item.category,
+        code: term.code,
+        name: term.name,
+        category: term.category,
+        description: term.description,
+        isActive: true,
       },
     });
+    count++;
   }
-  console.log(`✅ Seeded ${INDUSTRIES.length} industries.`);
 
-  // 2. Seed ERP Systems
-  for (const item of ERP_SYSTEMS) {
-    await prisma.erpTaxonomy.upsert({
-      where: { name: item.name },
-      update: {},
-      create: {
-        name: item.name,
-        vendor: item.vendor,
-        tier: item.tier,
-      },
-    });
-  }
-  console.log(`✅ Seeded ${ERP_SYSTEMS.length} ERP systems.`);
-
-  // 3. Seed Accounting Systems
-  for (const item of ACCOUNTING_SYSTEMS) {
-    await prisma.accountingTaxonomy.upsert({
-      where: { name: item.name },
-      update: {},
-      create: {
-        name: item.name,
-        vendor: item.vendor,
-        category: item.category,
-      },
-    });
-  }
-  console.log(`✅ Seeded ${ACCOUNTING_SYSTEMS.length} accounting systems.`);
-
-  // 4. Seed Deal Types
-  for (const item of DEAL_TYPES) {
-    await prisma.dealTypeTaxonomy.upsert({
-      where: { code: item.code },
-      update: {},
-      create: {
-        name: item.name,
-        code: item.code,
-        description: item.description,
-      },
-    });
-  }
-  console.log(`✅ Seeded ${DEAL_TYPES.length} deal types.`);
-
-  // 5. Seed Integration Types
-  for (const item of INTEGRATION_TYPES) {
-    await prisma.integrationTypeTaxonomy.upsert({
-      where: { code: item.code },
-      update: {},
-      create: {
-        name: item.name,
-        code: item.code,
-        description: item.description,
-      },
-    });
-  }
-  console.log(`✅ Seeded ${INTEGRATION_TYPES.length} integration types.`);
-
-  // 6. Seed PMI Tasks
-  for (const item of PMI_TASKS) {
-    await prisma.pmiTaskTaxonomy.upsert({
-      where: { name: item.name },
-      update: {},
-      create: {
-        name: item.name,
-        category: item.category,
-      },
-    });
-  }
-  console.log(`✅ Seeded ${PMI_TASKS.length} PMI tasks.`);
-
-  console.log('✨ MerQent Database Taxonomy Seed Completed successfully.');
+  console.log(`✅ Seeded ${count} taxonomy terms successfully across all categories.`);
+  console.log('✨ MerQent Database Taxonomy Seed Completed.');
 }
 
 main()

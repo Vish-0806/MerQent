@@ -3,8 +3,6 @@ import {
   UserRole,
   PrimaryRoleType,
   AvailabilityStatus,
-  ProjectStatus,
-  FirmAumTier,
 } from '@merqent/shared-types';
 
 export const RegisterUserSchema = z.object({
@@ -17,7 +15,7 @@ export const RegisterUserSchema = z.object({
     .regex(/[0-9]/, 'Password must contain at least one number')
     .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
   fullName: z.string().min(2, 'Full name is required'),
-  role: z.enum([UserRole.PE_FIRM_ADMIN, UserRole.CONSULTANT_OPERATOR]),
+  role: z.enum([UserRole.PE_FIRM_ADMIN, UserRole.CONSULTANT_OPERATOR] as const),
 });
 
 export const LoginUserSchema = z.object({
@@ -47,3 +45,8 @@ export const UpdateConsultantProfileSchema = z.object({
   geographyCountry: z.string().min(2),
   willingToTravelPercent: z.number().int().min(0).max(100),
 });
+
+export type RegisterUserInput = z.infer<typeof RegisterUserSchema>;
+export type LoginUserInput = z.infer<typeof LoginUserSchema>;
+export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
+export type UpdateConsultantProfileInput = z.infer<typeof UpdateConsultantProfileSchema>;

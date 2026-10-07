@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@merqent/shared-types": ["packages/shared-types/src/index.ts"],
+      "@merqent/validation": ["packages/validation/src/index.ts"],
+      "@merqent/config": ["packages/config/src/index.ts"],
+      "@merqent/ui": ["packages/ui/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist", ".next"]
+}

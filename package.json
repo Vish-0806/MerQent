@@ -22,12 +22,17 @@
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
+    "@types/node": "^20.14.10",
     "prettier": "^3.3.3",
+    "prisma": "5.22.0",
     "turbo": "^2.0.14",
     "typescript": "^5.5.4"
   },
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@prisma/client": "5.22.0"
   }
 }

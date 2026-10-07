@@ -1,4 +1,4 @@
-// Canonical Domain Enums for MerQent
+// Canonical Domain Enums & Types for MerQent
 
 export enum UserRole {
   PE_FIRM_ADMIN = 'PE_FIRM_ADMIN',
@@ -6,6 +6,16 @@ export enum UserRole {
   CONSULTANT_OPERATOR = 'CONSULTANT_OPERATOR',
   VERIFICATION_REVIEWER = 'VERIFICATION_REVIEWER',
   PLATFORM_ADMIN = 'PLATFORM_ADMIN',
+}
+
+// SystemRole alias for backward compatibility across backend guards & decorators
+export type SystemRole = UserRole;
+export const SystemRole = UserRole;
+
+export enum BaseRole {
+  PE_FIRM = 'PE_FIRM',
+  CONSULTANT = 'CONSULTANT',
+  ADMIN = 'ADMIN',
 }
 
 export enum UserStatus {
@@ -17,8 +27,8 @@ export enum UserStatus {
 
 export enum FirmAumTier {
   UNDER_500M = 'UNDER_500M',
-  TIER_500M_TO_2B = '500M_TO_2B',
-  TIER_2B_TO_10B = '2B_TO_10B',
+  TIER_500M_TO_2B = 'TIER_500M_TO_2B',
+  TIER_2B_TO_10B = 'TIER_2B_TO_10B',
   OVER_10B = 'OVER_10B',
 }
 
