@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@merqent/shared-types": "workspace:*",
-    "@merqent/shared-validation": "workspace:*",
+    "@merqent/validation": "workspace:*",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-dropdown-menu": "^2.1.1",
     "@radix-ui/react-select": "^2.1.1",

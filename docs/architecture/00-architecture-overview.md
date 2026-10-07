@@ -80,17 +80,19 @@ graph TD
 
 | Layer | Selected Technology | Reference |
 |---|---|---|
-| **Web Frontend** | Next.js 14+ (App Router), React 18+, TypeScript, Tailwind CSS, Radix UI | [ADR-001](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-001-frontend-framework.md) |
-| **Backend API** | Node.js 20 LTS, NestJS 10+, Strict TypeScript, Prisma ORM | [ADR-002](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-002-backend-framework.md) |
-| **Database** | PostgreSQL 16+ with `pgvector`, `pg_trgm`, `uuid-ossp` extensions | [ADR-003](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-003-primary-database.md) |
-| **Search Engine** | Hybrid PostgreSQL (`tsvector` keyword + `pgvector` HNSW cosine similarity) | [ADR-004](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-004-search-and-vector-retrieval.md) |
-| **AI / LLM** | OpenAI (`text-embedding-3-small` + `gpt-4o-mini`) + Anthropic Claude fallback adapter | [ADR-005](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-005-ai-llm-provider.md) |
-| **Object Storage**| Amazon S3 (MinIO for local dev) with SSE-KMS and Pre-Signed URLs (TTL <= 15m)| [ADR-006](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-006-object-storage.md) |
-| **Authentication**| Dual-Token JWT (RS256 in HttpOnly Cookie / Bearer Header) + DB Refresh Token | [ADR-007](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-007-authentication-and-sessions.md) |
-| **Scheduling** | Platform-Native Scheduler with RFC 5545 iCalendar (`.ics`) MIME dispatch | [ADR-008](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-008-calendar-and-scheduling.md) |
-| **Real-Time Push**| Server-Sent Events (SSE) over HTTP/2 with Redis Pub/Sub event fanout | [ADR-009](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-009-realtime-and-event-messaging.md) |
-| **Observability** | Pino structured JSON logging + Sentry APM + OpenTelemetry metrics | [ADR-010](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-010-observability-and-monitoring.md) |
-| **Cloud Hosting** | AWS ECS on AWS Fargate, Aurora PostgreSQL Serverless v2, ElastiCache Redis | [05-final-technology-stack.md](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/05-final-technology-stack.md) |
+| **Web Frontend** | Next.js 14+ (App Router), React 18+, TypeScript, Tailwind CSS, Radix UI | [ADR-001](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-001-frontend.md) |
+| **Backend API** | Node.js 20 LTS, NestJS 10+, Strict TypeScript, Modular Monolith | [ADR-002](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-002-backend.md) |
+| **Database** | PostgreSQL 16+ with `pgvector`, `pg_trgm`, `uuid-ossp` extensions | [ADR-003](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-003-database.md) |
+| **ORM / Data Access** | Prisma ORM 5+ with declarative schema and migrations | [ADR-004](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-004-orm.md) |
+| **Authentication** | Dual-Token JWT (15m Access) + DB/Redis Stateful Refresh Token Rotation | [ADR-005](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-005-authentication.md) |
+| **AI / Matching** | Hybrid Grounded AI Matching Engine via Abstracted `IAiProvider` | [ADR-006](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-006-ai.md) |
+| **Search Engine** | PostgreSQL (`pg_trgm` trigram keyword + `pgvector` HNSW cosine similarity) | [ADR-007](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-007-search.md) |
+| **Real-Time Push** | WebSockets / Socket.IO with Redis Cluster Adapter event fanout | [ADR-008](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-008-realtime.md) |
+| **Object Storage** | S3-Compatible Object Storage (MinIO / AWS S3) with Pre-Signed URLs (15m) | [ADR-009](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-009-storage.md) |
+| **Email** | Transactional Email via Abstracted `IEmailService` (Resend / AWS SES) | [ADR-010](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-010-email.md) |
+| **Scheduling** | Platform-Native Scheduler with RFC 5545 iCalendar (`.ics`) MIME dispatch | [ADR-011](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-011-calendar.md) |
+| **Cloud Hosting** | Containerized Cloud Deployment (Docker / ECS Fargate / Cloud Run) | [ADR-012](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-012-deployment.md) |
+| **Observability** | Pino structured JSON logging + Sentry APM + OpenTelemetry metrics | [ADR-013](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-013-observability.md) |
 
 ---
 

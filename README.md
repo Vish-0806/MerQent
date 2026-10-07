@@ -65,21 +65,24 @@ graph LR
 
 ## 3. Final Production Technology Stack
 
-Following a rigorous, evidence-based evaluation against eleven enterprise criteria, the production stack is formally ratified across 10 Architecture Decision Records:
+Following a rigorous, evidence-based evaluation against eleven enterprise criteria, the production stack is formally ratified across 13 Architecture Decision Records:
 
 | Layer | Selected Production Technology | Architectural Justification | Reference ADR |
 |---|---|---|---|
-| **Web Frontend** | **Next.js 14+ (App Router)** / React 18+ / TypeScript / Tailwind CSS / Radix UI | Hybrid React Server Components (RSC) for fast SEO-rendered public previews; interactive client components for chat/scheduling; shared TypeScript types with backend. | [ADR-001](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-001-frontend-framework.md) |
-| **Backend API** | **Node.js 20 LTS / NestJS 10+** (Strict TypeScript) | Enterprise Modular Monolith with Inversion of Control (IoC), Dependency Injection, clean DDD boundaries, and automated OpenAPI 3.0 generation. | [ADR-002](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-002-backend-framework.md) |
-| **Primary Database** | **PostgreSQL 16+** with `pgvector` & `pg_trgm` | Strict ACID transactional consistency; unified relational, JSONB document, and 1536d vector embedding storage in a single engine with zero ETL lag. | [ADR-003](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-003-primary-database.md) |
-| **Search & Discovery** | **Hybrid PostgreSQL** (`tsvector` + `pgvector` HNSW) | Single-engine hybrid queries combining exact boolean taxonomy filters with sub-25ms cosine similarity ranking. | [ADR-004](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-004-search-and-vector-retrieval.md) |
-| **AI / LLM Provider** | **OpenAI API** (`text-embedding-3-small` + `gpt-4o-mini`) + **Anthropic Claude 3.5 Sonnet** Fallback | Guaranteed strict JSON schema mode for explainability; standardized 1536d embeddings; contractual Zero Data Retention (ZDR). | [ADR-005](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-005-ai-llm-provider.md) |
-| **Object Storage** | **Amazon S3** (MinIO for local development) with SSE-KMS | Zero-proxy direct browser uploads/downloads via short-lived signed URLs (TTL <= 15m); ClamAV malware scanning pipeline. | [ADR-006](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-006-object-storage.md) |
-| **Authentication** | **Dual-Token JWT** (RS256 in HttpOnly Cookies / Bearer Header) + DB Refresh Token | XSS-immune browser cookies; native mobile Bearer header compatibility; immediate server-side session revocation. | [ADR-007](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-007-authentication-and-sessions.md) |
-| **Scheduling** | **Native Scheduler + RFC 5545 iCalendar (`.ics`)** | Zero external calendar OAuth compliance friction; universal Outlook/Google/Apple Calendar compatibility; timezone-safe. | [ADR-008](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-008-calendar-and-scheduling.md) |
-| **Real-Time Push** | **Server-Sent Events (SSE)** over HTTP/2 with Redis Pub/Sub | Transparent traversal of strict corporate PE enterprise firewalls; native browser auto-reconnect; REST POST for writes. | [ADR-009](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-009-realtime-and-event-messaging.md) |
-| **Observability** | **Pino JSON + Sentry APM + OpenTelemetry** | Fast structured logging with automatic PII scrubbing; distributed error tracing; Prometheus metrics; zero vendor lock-in. | [ADR-010](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-010-observability-and-monitoring.md) |
-| **Cloud Hosting** | **AWS ECS on AWS Fargate** / Amazon Aurora Serverless v2 | Serverless container orchestration with zero node management; Multi-AZ high availability; baseline early-stage cost ~$320/month. | [05-final-technology-stack.md](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/05-final-technology-stack.md) |
+| **Web Frontend** | **Next.js 14+ (App Router)** / React 18+ / TypeScript / Tailwind CSS / Radix UI | Hybrid React Server Components (RSC) for fast SEO-rendered public previews; interactive client components for chat/scheduling; shared TypeScript types with backend. | [ADR-001](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-001-frontend.md) |
+| **Backend API** | **Node.js 20 LTS / NestJS 10+** (Strict TypeScript) | Enterprise Modular Monolith with Inversion of Control (IoC), Dependency Injection, clean domain boundaries, and automated OpenAPI 3.0 generation. | [ADR-002](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-002-backend.md) |
+| **Primary Database** | **PostgreSQL 16+** with `pgvector` & `pg_trgm` | Strict ACID transactional consistency; unified relational, JSONB document, and 1536d vector embedding storage in a single engine with zero ETL lag. | [ADR-003](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-003-database.md) |
+| **ORM / Migrations** | **Prisma ORM 5+** | Declarative schema as single source of truth; type-safe client generation; automated migration and seed engine. | [ADR-004](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-004-orm.md) |
+| **Authentication** | **Dual-Token JWT** (15m Access Token) + DB/Redis Stateful Refresh Token Rotation | XSS-immune browser cookies; native mobile Bearer header compatibility; immediate server-side session revocation. | [ADR-005](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-005-authentication.md) |
+| **AI Matching Engine** | **Hybrid Grounded AI Matching Engine** via Abstracted `IAiProvider` | Two-stage grounded pipeline: relational filtering + `pgvector` semantic retrieval + deterministic multi-factor scoring + LLM explainability. | [ADR-006](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-006-ai.md) |
+| **Search & Discovery** | **PostgreSQL native** (`pg_trgm` + `pgvector` HNSW) | Single-engine hybrid queries combining exact boolean taxonomy filters with sub-25ms cosine similarity ranking. | [ADR-007](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-007-search.md) |
+| **Real-Time Push** | **WebSockets / Socket.IO** with Redis Cluster Adapter | Low-latency bidirectional events, delivery receipts, typing indicators, presence, room-based isolation, and HTTP long-polling fallback. | [ADR-008](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-008-realtime.md) |
+| **Object Storage** | **S3-Compatible Object Storage** (MinIO for local dev / AWS S3) | Zero-proxy direct browser uploads/downloads via short-lived signed URLs (TTL <= 15m); ClamAV malware scanning pipeline. | [ADR-009](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-009-storage.md) |
+| **Email** | **Transactional Email** via `IEmailService` (Resend / AWS SES) | Non-blocking queue-based email dispatch; React Email templates; deliverability tracking. | [ADR-010](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-010-email.md) |
+| **Scheduling** | **Native Scheduler + RFC 5545 iCalendar (`.ics`)** | Zero external calendar OAuth compliance friction; universal Outlook/Google/Apple Calendar compatibility; timezone-safe. | [ADR-011](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-011-calendar.md) |
+| **Deployment** | **Containerized Cloud Deployment** (Docker / AWS ECS / Cloud Run) | Multi-stage Docker containers, zero-downtime rolling updates, automated pre-deployment migrations. | [ADR-012](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-012-deployment.md) |
+| **Observability** | **Pino JSON + Sentry APM + OpenTelemetry** | Fast structured logging with automatic PII scrubbing; distributed error tracing; Prometheus metrics; zero vendor lock-in. | [ADR-013](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-013-observability.md) |
+| **Future Mobile** | **Flutter (Dart)** | Shared REST & Socket.IO backend API; single cross-platform codebase for iOS and Android. | [23-mobile-readiness.md](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/23-mobile-readiness.md) |
 
 ---
 
@@ -90,30 +93,53 @@ The MerQent repository is organized as a production **TypeScript Monorepo** mana
 ```text
 MerQent/
 ├── apps/
-│   ├── web/                          # Next.js 14+ Frontend Web Application
-│   └── api/                          # NestJS 10+ Modular API Service
-│       └── prisma/schema.prisma      # PostgreSQL 16+ Relational & Vector Schema
+│   ├── web/                          # Next.js 14+ Frontend (App Router, features/, components/)
+│   └── api/                          # NestJS 10+ Modular API Service (src/modules/, src/infrastructure/)
 │
 ├── packages/
-│   ├── shared-types/                 # Canonical domain enums, interfaces, user context
-│   └── shared-validation/            # Zod validation schemas shared between Web and API
+│   ├── shared-types/                 # Canonical domain enums, interfaces, contracts
+│   ├── validation/                   # Zod validation schemas shared across workspaces
+│   ├── config/                       # Shared constants, limits, conventions
+│   └── ui/                           # Design system tokens and UI contracts
+│
+├── prisma/
+│   ├── schema.prisma                 # PostgreSQL 16+ Relational & Vector Schema (21 entities)
+│   ├── migrations/                   # Versioned SQL migrations
+│   └── seed/seed.ts                  # Controlled PMI taxonomies seed script
 │
 ├── infrastructure/
 │   ├── docker/docker-compose.yml     # Local development (PostgreSQL+pgvector, Redis, MinIO)
-│   └── database/init.sql             # Database extensions initialization script
+│   ├── database/init.sql             # Database extensions initialization script
+│   ├── deployment/                   # Cloud deployment manifests
+│   ├── environments/                 # Environment configurations
+│   ├── search/                       # Search indexing configuration
+│   └── monitoring/                   # Observability & telemetry configurations
 │
-├── docs/                             # Complete Version-Controlled Architecture
-│   ├── product/                      # Product definition, requirements, open questions
-│   ├── architecture/                 # 26 comprehensive architectural specifications (00 to 26)
-│   ├── decisions/                    # 10 formal Architecture Decision Records (ADRs 001-010)
-│   ├── api/openapi.yaml              # OpenAPI 3.0 specification contract
-│   └── phase-reports/phase-1/        # 26 task completion reports + Master Final Report
+├── scripts/
+│   ├── development/setup-dev.ps1     # Local setup and container startup
+│   ├── database/migrate-and-seed.ps1 # Migration and taxonomy seeding
+│   ├── testing/                      # Test automation scripts
+│   └── deployment/                   # Build and packaging scripts
 │
 ├── tests/
-│   ├── e2e/                          # 10 Playwright critical end-to-end user workflows
+│   ├── e2e/                          # Playwright critical end-to-end user workflows
+│   ├── integration/                  # API integration test suites
 │   ├── security/                     # Multi-tenant isolation & privilege escalation tests
 │   └── performance/                  # k6 load testing scenarios
 │
+├── docs/                             # Complete Version-Controlled Architecture
+│   ├── product/                      # Product definition, requirements, user roles, business rules
+│   ├── architecture/                 # 27 comprehensive architectural specifications (00 to 26)
+│   ├── decisions/                    # 13 formal Architecture Decision Records (ADRs 001-013)
+│   ├── api/                          # OpenAPI 3.0 specification & endpoint overview
+│   ├── database/                     # Relational & vector schema documentation
+│   ├── ai/                           # AI matching and grounding architecture
+│   ├── security/                     # Security model & threat mitigation
+│   ├── testing/                      # Testing strategy & coverage standards
+│   ├── deployment/                   # Deployment and environment strategies
+│   └── phase-reports/phase-1/        # 26 task completion reports + Master Final Report
+│
+├── .github/workflows/ci.yml          # GitHub Actions automated CI pipeline
 ├── .editorconfig                     # Consistent editor formatting
 ├── .env.example                      # Environment configuration template
 ├── .gitignore                        # Git exclusion rules

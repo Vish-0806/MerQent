@@ -15,6 +15,10 @@
     "test:e2e": "turbo run test:e2e",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:generate": "pnpm --filter @merqent/api run prisma:generate",
+    "db:migrate": "pnpm --filter @merqent/api run prisma:migrate",
+    "db:seed": "pnpm --filter @merqent/api run prisma:seed",
+    "db:studio": "pnpm --filter @merqent/api run prisma:studio",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {

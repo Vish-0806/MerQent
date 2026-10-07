@@ -1,252 +1,319 @@
 # MerQent — Phase 1 Final Architecture Master Report
 
-**Report Version:** 1.0.0  
-**Phase:** 1 — Production Architecture, Technology Selection & Complete Architecture  
+**Report Version:** 2.0.0  
+**Phase:** 1 — Master Architecture Correction & Complete Repository Structure  
 **Author:** Lead Software Architect, Principal Engineer, Security Architect & AI Architect  
 **Date of Completion:** 2026-10-07  
 
 ---
 
 ## 1. Executive Summary
+MerQent has completed the full, unabridged **Phase 1 (Production Architecture & Repository Structure)** in strict accordance with the Master Architecture Correction prompt. Every major subsystem, business domain, persistence schema, search pipeline, grounded AI matching algorithm, realtime gateway, and repository layout has been reconciled, validated, and established as the canonical source of truth for the project.
 
-MerQent has completed the full, unabridged **Phase 1 (Production Architecture)** in accordance with enterprise software engineering standards. Every major subsystem, data model, security boundary, search pipeline, AI matching algorithm, and infrastructure deployment topology has been designed, validated, and documented. 
-
-This is not a theoretical exercise or a generic tutorial architecture. The platform is engineered specifically around the domain complexities of **Post-Merger Integration (PMI)**: unifying enterprise ERPs (SAP, Oracle, NetSuite), harmonizing charts of accounts, managing carve-outs under Transition Services Agreements (TSAs), and resolving organizational frictions post-acquisition.
-
-The final architecture completely fulfills the 39 architectural questions established in the Phase 1 Master Objective.
+This architecture is specifically engineered to address the complexities of **Post-Merger Integration (PMI)**: unifying enterprise ERPs (SAP S/4HANA, NetSuite, Dynamics 365), harmonizing charts of accounts, managing corporate carve-outs under Transition Services Agreements (TSAs), and resolving organizational friction post-acquisition for Private Equity sponsors.
 
 ---
 
 ## 2. Product Scope
-
-The platform connects:
-- **Private Equity Firms & Portfolio Operations Groups:** Needing to rapidly source, evaluate, compare, and engage vetted integration operators for their portfolio companies.
-- **PMI Consultants & Experienced Operators:** Specialized practitioners possessing proven experience leading ERP consolidations, carve-outs, financial ledger integrations, and operational transformations.
-
----
-
-## 3. Architecture Summary
-
-MerQent is architected as an enterprise **Modular Monolith** in a **TypeScript Monorepo** (Turborepo + pnpm):
-- **Frontend Client (`apps/web`):** Next.js 14+ (App Router), React 18+, Tailwind CSS, Radix UI primitives.
-- **Backend Service (`apps/api`):** Node.js 20 LTS, NestJS 10+, Strict TypeScript, Prisma ORM.
-- **Persistence Layer:** PostgreSQL 16+ uniting relational ACID transactions, JSONB documents, and 1536d vector embeddings (`pgvector` with HNSW index) within a single engine.
-- **Real-Time Push:** Server-Sent Events (SSE) over HTTP/2 with Redis 7.2 Pub/Sub.
-- **Async Workers:** BullMQ job queues on Redis processing AI matching, email dispatch, virus scanning, and indexing.
-- **Object Storage:** Amazon S3 / MinIO with client-direct pre-signed URLs (TTL <= 15m) and KMS encryption.
-- **AI Matching & Grounding:** Dual-adapter strategy (OpenAI `text-embedding-3-small` + `gpt-4o-mini` with strict JSON schemas; hot-swappable Claude 3.5 Sonnet fallback) with Zero Data Retention (ZDR) and automated `GroundingInterceptor` anti-hallucination verification.
-- **Cloud Infrastructure:** Amazon ECS on AWS Fargate (Serverless Containers), Amazon Aurora PostgreSQL Serverless v2, Amazon ElastiCache Redis, Cloudflare Edge WAF.
+The platform provides a specialized B2B marketplace and professional collaboration platform serving:
+- **Private Equity Firms / Acquisition Organizations:** Needing to rapidly scope, post integration mandates, discover specialized operators, compare candidates across 21 domain parameters, and manage confidential scoping engagements.
+- **PMI Consultants / Operators:** Experienced practitioners possessing proven track records in ERP cutovers, financial consolidation, carve-out governance, and culture integration.
+- **Platform Administrators:** Operational curators responsible for reviewing verification dossiers, moderating project postings, curating domain taxonomies, and auditing AI recommendation quality.
 
 ---
 
-## 4. Final Technology Stack
+## 3. Final Technology Stack
+The baseline technology stack is established on non-negotiable architectural foundations:
+- **Web Frontend:** Next.js 14+ (App Router) + TypeScript ([`ADR-001-frontend.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-001-frontend.md))
+- **Backend API:** Node.js 20 LTS + NestJS 10+ + TypeScript ([`ADR-002-backend.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-002-backend.md))
+- **Primary Database:** PostgreSQL 16+ with `pgvector` & `pg_trgm` ([`ADR-003-database.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-003-database.md))
+- **ORM / Migrations:** Prisma ORM 5+ ([`ADR-004-orm.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-004-orm.md))
+- **Authentication:** JWT (15m) + Stateful Refresh Token Rotation ([`ADR-005-authentication.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-005-authentication.md))
+- **AI Matching Engine:** Hybrid AI Matching via Abstracted `IAiProvider` ([`ADR-006-ai.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-006-ai.md))
+- **Search Engine:** PostgreSQL native (`pg_trgm` + `pgvector`) ([`ADR-007-search.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-007-search.md))
+- **Realtime Collaboration:** WebSockets / Socket.IO with Redis Adapter ([`ADR-008-realtime.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-008-realtime.md))
+- **Object Storage:** S3-Compatible Object Storage (MinIO / AWS S3) ([`ADR-009-storage.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-009-storage.md))
+- **Email:** Transactional Email via `IEmailService` (Resend / AWS SES) ([`ADR-010-email.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-010-email.md))
+- **Calendar & Scheduling:** Native RFC 5545 iCalendar (`.ics`) engine ([`ADR-011-calendar.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-011-calendar.md))
+- **Deployment:** Containerized Cloud Deployments (Docker / ECS / Cloud Run) ([`ADR-012-deployment.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-012-deployment.md))
+- **Observability:** Structured JSON Logging (Pino) + Sentry + OpenTelemetry ([`ADR-013-observability.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-013-observability.md))
+- **Future Mobile:** Flutter (Dart) using the exact same backend REST & WebSocket API.
 
-Formally ratified across 10 Architecture Decision Records:
-- **Frontend Framework:** Next.js 14+ App Router ([ADR-001](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-001-frontend-framework.md))
-- **Backend Framework:** Node.js / NestJS ([ADR-002](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-002-backend-framework.md))
-- **Primary Database:** PostgreSQL 16+ with `pgvector` ([ADR-003](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-003-primary-database.md))
-- **Search & Discovery:** Hybrid PostgreSQL (`tsvector` + `pgvector` HNSW) ([ADR-004](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-004-search-and-vector-retrieval.md))
-- **AI / LLM Provider:** OpenAI Strict JSON + Anthropic Fallback ([ADR-005](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-005-ai-llm-provider.md))
-- **Object Storage:** Amazon S3 with SSE-KMS & Signed URLs ([ADR-006](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-006-object-storage.md))
-- **Authentication:** Dual-Token JWT (HttpOnly Cookie / Bearer) + DB Refresh ([ADR-007](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-007-authentication-and-sessions.md))
-- **Scheduling:** Platform-Native Scheduler + RFC 5545 iCalendar (`.ics`) ([ADR-008](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-008-calendar-and-scheduling.md))
-- **Real-Time Push:** Server-Sent Events (SSE) over HTTP/2 ([ADR-009](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-009-realtime-and-event-messaging.md))
-- **Observability:** Pino JSON + Sentry APM + OpenTelemetry ([ADR-010](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-010-observability-and-monitoring.md))
+---
+
+## 4. System Architecture
+The platform is organized around a clean, decoupled, headless architecture:
+- Next.js Web Frontend and future Flutter Mobile client communicate with the NestJS API exclusively over HTTPS REST and WSS Socket.IO.
+- The backend never depends on the existence of the frontend web layer.
+- Persistence, search, and vector embeddings are unified within PostgreSQL 16+ using `pgvector` and `pg_trgm`, preventing dual-write state desynchronization.
 
 ---
 
 ## 5. Repository Architecture
-
-- Organized as a Turborepo monorepo with pnpm workspaces.
-- `apps/web`: Next.js web application.
-- `apps/api`: NestJS API application.
-- `packages/shared-types`: Canonical domain enums, interfaces, and context objects.
-- `packages/shared-validation`: Zod schemas shared between frontend forms and backend API pipes.
-- `infrastructure/`: Docker Compose local development setup and database init scripts.
-- Strict boundary rules: Apps cannot import from peer apps; all shared logic resides in `@merqent/*` packages.
-
----
-
-## 6. System Components
-
-Mapped 14 core system modules: Identity (IAM), Organizations (Firms), Consultant Profiles, Governed Taxonomies, PMI Projects, Hybrid Search, AI Matching, Shortlists, Connections, Messaging, Scheduling, Notifications, File Storage, Verification, and Admin Control Plane. Designed explicit anti-circular dependency matrix and architectural invariants.
-
----
-
-## 7. User Roles & Permissions
-
-Established 5 canonical roles: `PE_FIRM_ADMIN`, `PE_FIRM_MEMBER`, `CONSULTANT_OPERATOR`, `VERIFICATION_REVIEWER`, and `PLATFORM_ADMIN`. Enforced a 32-permission matrix based on Role, Ownership, and State.
-
----
-
-## 8. Domain Model
-
-Formulated 13 Aggregate Roots using Domain-Driven Design (DDD): `User`, `Firm`, `ConsultantProfile`, `TaxonomyTerm`, `Project`, `ProjectMatch`, `Shortlist`, `Connection`, `Conversation`, `Meeting`, `VerificationRequest`, `FileRecord`, and `AuditLog`. Mapped complete attributes, relationships, invariants, and privacy classifications.
-
----
-
-## 9. Backend Architecture
-
-Engineered NestJS Modular Monolith with standardized 7-tier module structure (Controllers, Services, Repositories, DTOs, Events, Policies, Module). Implemented global Pino logging, Throttler rate limiting, Zod validation pipes, and RFC 7807 Problem Details error formatting.
-
----
-
-## 10. Frontend Architecture
-
-Designed Next.js App Router structure across 4 route groups: `(public)` marketing/SEO, `(auth)` onboarding, `(dashboard)` role-gated PE and consultant workspaces, and `(dashboard)/admin` governance. Formulated 3-tier component hierarchy and hybrid state management (RSC + TanStack Query + Zustand).
+The repository is structured as a pnpm workspace and Turborepo monorepo:
+```
+MerQent/
+├── apps/
+│   ├── web/ (Next.js 14 App Router, features/, components/)
+│   └── api/ (NestJS 10, src/modules/, src/infrastructure/)
+├── packages/
+│   ├── shared-types/ (Domain enums, DTO interfaces)
+│   ├── validation/ (Zod validation schemas)
+│   ├── config/ (Shared constants, rate limits)
+│   └── ui/ (Design system tokens, contracts)
+├── prisma/
+│   ├── schema.prisma (21-entity authoritative schema)
+│   ├── migrations/
+│   └── seed/ (seed.ts for controlled taxonomies)
+├── infrastructure/
+│   ├── docker/ (docker-compose: Postgres + pgvector, Redis, MinIO)
+│   ├── database/ (init.sql)
+│   ├── deployment/
+│   ├── environments/
+│   ├── search/
+│   └── monitoring/
+├── scripts/
+│   ├── development/ (setup-dev.ps1)
+│   ├── database/ (migrate-and-seed.ps1)
+│   ├── testing/
+│   └── deployment/
+├── tests/
+│   ├── e2e/ (e2e-scenarios.md)
+│   ├── integration/
+│   ├── security/
+│   └── performance/
+├── docs/ (product/, architecture/, decisions/, api/, database/, ai/, security/, testing/, deployment/, phase-reports/)
+└── .github/workflows/ (ci.yml)
+```
 
 ---
 
-## 11. Database Architecture
-
-Authored production-ready PostgreSQL 16+ physical schema in Prisma (`apps/api/prisma/schema.prisma`). Implemented HNSW vector indexes for 1536d embeddings, trigram GIN indexes for fuzzy text search, and PL/pgSQL database triggers enforcing immutable append-only audit logs.
-
----
-
-## 12. Search Architecture
-
-Engineered 2-stage hybrid search pipeline combining exact boolean filtering on governed PMI taxonomies with dense vector cosine similarity via `pgvector`. Formulated Reciprocal Rank Fusion (RRF) scoring formula, dynamic facet aggregations in Redis, and graceful fallback to keyword search during upstream AI outages.
+## 6. Backend Architecture
+Organized into 17 clean domain modules in `apps/api/src/modules/`:
+`auth`, `users`, `organizations`, `consultants`, `taxonomies`, `projects`, `search`, `matching`, `shortlists`, `connections`, `messaging`, `scheduling`, `notifications`, `files`, `verification`, `administration`, `analytics`, `audit`.
+Cross-cutting concerns live in `apps/api/src/infrastructure/` (`database`, `ai`, `search`, `storage`, `email`, `realtime`, `observability`).
 
 ---
 
-## 13. AI Matching Architecture
-
-Engineered deterministic composite scoring formula across 6 orthogonal dimensions: ERP Alignment (30%), Deal Type (20%), Industry (15%), PMI Experience (15%), Availability (10%), and Verification Tier (10%). Established confidence rating formula and low-confidence review gating ($C < 60\%$).
-
----
-
-## 14. Explainable AI
-
-Designed dedicated Explainable AI (XAI) architecture with Ground Truth Fact Vaults and an automated `GroundingInterceptor` that verifies that every claim in an explanation binds to an immutable `sourceEntityId` owned by the candidate. Fabricated claims are automatically stripped. Grounded claims are visually badged (`VERIFIED FACT`, `SELF-REPORTED CLAIM`, `AI INFERENCE`).
+## 7. Frontend Architecture
+Feature-oriented Next.js 14+ application (`apps/web`):
+- Route groups: `(public)`, `(auth)`, `(firm)`, `(consultant)`, `(admin)`.
+- Components divided into `ui/` (primitives), `layout/` (headers, sidebars), and `shared/`.
+- Domain capabilities grouped under `features/` (`auth`, `organizations`, `consultants`, `projects`, `search`, `matching`, `shortlists`, `connections`, `messaging`, `scheduling`, `notifications`, `verification`, `administration`).
 
 ---
 
-## 15. Messaging
-
-Engineered confidential in-platform messaging gated behind bilateral `ACCEPTED` connection status. Real-time push executed via Server-Sent Events (SSE) over HTTP/2 with Redis Pub/Sub. Built sub-50ms cursor-based pagination and offline transactional email alerts.
-
----
-
-## 16. Scheduling
-
-Engineered platform-native scheduler coordinating introductory scoping meetings across divergent global time zones. Formulated universal UTC database storage, IANA timezone tracking, conflict prevention logic, RFC 5545 iCalendar (`.ics`) generation with calendar alarm triggers, and automated 24h and 1h delayed reminders.
+## 8. Database Architecture
+PostgreSQL 16+ as the single system of record, managed via Prisma ORM:
+- 21 domain entities with strict foreign keys, unique constraints, and lifecycle status timestamps.
+- Authoritative schema located at `prisma/schema.prisma`.
+- Seed script at `prisma/seed/seed.ts` populating controlled PMI taxonomies (Industries, ERPs, Accounting, Deal Types, Integration Types, PMI Tasks).
 
 ---
 
-## 17. Notifications
-
-Designed event-driven multi-channel notification engine consuming 11 distinct domain events. Engineered Redis idempotency keys, 5-minute message debouncing to consolidate rapid chat alerts into single executive digests, and type-safe React Email templates dispatched via Resend.
-
----
-
-## 18. File Architecture
-
-Engineered Zero-Proxy S3 Signed URL architecture (TTL <= 15 minutes) offloading byte streaming from backend servers. Enforced strict MIME whitelists (max 25MB), KMS encryption at rest, and an automated ClamAV malware scanning pipeline quarantining files until verified clean.
+## 9. Search Architecture
+Unified PostgreSQL search layer:
+- Structured discovery using B-Tree indices on taxonomy foreign keys, rates, and availability.
+- Trigram keyword search using GIN indexes (`pg_trgm`) on consultant bios and project narratives.
+- Dense semantic vector search using `pgvector` HNSW cosine distance (`vector_cosine_ops`).
 
 ---
 
-## 19. Verification
-
-Designed 4-tier progressive trust hierarchy: Tier 0 (Unverified), Tier 1 (Identity & Email Verified), Tier 2 (Credential & Work History Verified), and Tier 3 (Executive Reference Verified). Formulated administrative review queue workflows, 365-day badge validity lifecycles, and anti-collusion audit rules.
-
----
-
-## 20. Administration
-
-Designed comprehensive administration control plane enforcing strict Separation of Duties between `PLATFORM_ADMIN` and `VERIFICATION_REVIEWER`. Engineered verification queues, taxonomy governance, user moderation, AI low-confidence audit tools, and immutable audit log inspection.
+## 10. AI Architecture
+Two-stage grounded hybrid AI matching pipeline:
+- **Stage 1**: Hard filtering (availability, rates, baseline taxonomy) combined with `pgvector` HNSW dense vector candidate retrieval.
+- **Stage 2**: Deterministic multi-factor scoring (40% ERP, 25% Deal Type, 20% Industry, 15% Verified Evidence) with LLM-synthesized human-readable evidence summaries.
 
 ---
 
-## 21. Security & Privacy
-
-Engineered 5-layer Defense-in-Depth model: Argon2id password hashing, dual-token JWT sessions in HttpOnly cookies, mandatory TOTP MFA for administrators, row-level multi-tenant isolation (`WHERE firm_id = :tenantFirmId`), PE project confidentiality deal masking, S3 KMS encryption, and GDPR right-to-erasure workflows.
-
----
-
-## 22. API Architecture
-
-Published exhaustive RESTful API contract comprising 45 endpoints across 16 platform domains. Backed by machine-readable OpenAPI 3.0 specification (`docs/api/openapi.yaml`) with RFC 7807 error details, timestamp cursors, and `Idempotency-Key` headers.
+## 11. Explainability & Factual Grounding
+AI recommendations are strictly grounded in verifiable database records:
+- The AI is architecturally prohibited from hallucinating or fabricating consultant credentials.
+- Strict data categorization distinguishes `USER_REPORTED`, `VERIFIED_EVIDENCE`, `SYSTEM_CALCULATED`, and `AI_INFERRED_RELEVANCE`.
 
 ---
 
-## 23. Testing Strategy
-
-Formulated multi-tier testing pyramid: Unit Testing (85% coverage target), Integration Testing with Testcontainers (80% coverage target), AI Grounding & Anti-Hallucination golden evaluation suites, automated security penetration tests, 10 critical Playwright E2E workflows, and k6 performance benchmarks (API p95 < 200ms, search < 500ms, match pipeline < 3s).
-
----
-
-## 24. CI/CD
-
-Designed Trunk-Based Development workflow with automated GitHub Actions PR checks (Lint, Typecheck, Unit, Integration, Trivy scan). Built multi-stage distroless Docker container builds pushed to Amazon ECR, staging smoke test verification, expand-and-contract database migration safeguards, and automated container rollbacks upon failed health probes.
+## 12. Messaging Architecture
+Confidential, connection-gated communication:
+- Communication invariant: Unlocked only when underlying connection status is `ACCEPTED`.
+- WebSockets / Socket.IO with Redis Adapter handles realtime message delivery, typing indicators, read receipts, and presence.
+- REST handles message history, pagination, and transactional message creation.
 
 ---
 
-## 25. Deployment
-
-Designed production infrastructure on AWS Serverless Container Architecture: Amazon ECS on AWS Fargate, Amazon Aurora PostgreSQL Serverless v2 (Multi-AZ), Amazon ElastiCache Redis, Amazon S3 with SSE-KMS, and Cloudflare WAF/Edge. Established BCDR metrics: RPO < 15 minutes, RTO < 2 hours, and a baseline early-stage production cost of ~$320/month.
-
----
-
-## 26. Mobile Readiness
-
-Engineered client-agnostic backend interfaces ready for a future native mobile application (Flutter / React Native) with zero backend redesign. Formulated dual Bearer/cookie authentication handshakes, mobile-friendly lean payloads, timestamp cursor pagination, APNs/FCM push adapter boundaries, and universal deep linking (`merqent://*`).
+## 13. Scheduling Architecture
+Provider-independent discovery and interview meeting scheduler:
+- Built-in availability slot definition and conflict detection.
+- Meeting lifecycle: `PROPOSED` -> `CONFIRMED` -> `CANCELLED` / `RESCHEDULED`.
+- Generates RFC 5545 compliant `.ics` calendar invites universally compatible with Google Calendar, Outlook, and Apple Mail.
 
 ---
 
-## 27. Scalability
-
-Executed 10x volume stress test ($1,000$ PE firms, $20,000$ active vetted consultants, $5,000$ projects, $100,000$ queries/day, $250,000$ messages/day). Proved that current architecture delivers 10x-20x scaling headroom before requiring architectural refactoring. Verified that future collaboration extensions (Shared Workspaces, PMI 100-Day Checklists, Milestone Tracking, Virtual Deal Rooms, Enterprise SAML SSO) are cleanly accommodated.
+## 14. Notification Architecture
+Event-driven multi-channel notification engine:
+- Ingests domain events and checks user preferences and debounce windows.
+- Dual delivery channels: in-app alerts via Socket.IO user rooms (`user:{id}`) and transactional emails via BullMQ and Resend/SES.
 
 ---
 
-## 28. Architecture Decisions
+## 15. File & Document Architecture
+Encrypted object storage abstraction:
+- Direct-to-storage uploads and downloads using time-limited presigned URLs (15m TTL).
+- Validates MIME magic bytes and integrates asynchronous virus scanning.
+- MinIO for local development parity; AWS S3 in staging and production.
 
-Ratified 10 formal Architecture Decision Records (ADR-001 through ADR-010) in `docs/decisions/`. Every decision is accompanied by context, problem statement, options considered, selection rationale, rejected alternatives, trade-offs, consequences, and migration implications.
+---
+
+## 16. Verification Architecture
+Multi-tier trust framework for PMI consultants:
+- `TIER_0_UNVERIFIED` -> `TIER_1_IDENTITY` -> `TIER_2_EXPERIENCE` -> `TIER_3_CERTIFIED_LEAD`.
+- Evidence submission dossiers reviewed and approved exclusively by system Administrators.
+
+---
+
+## 17. Administration Architecture
+Dedicated administrative control plane (`/api/v1/admin/*`):
+- Consultant verification dossier reviews, project moderation, taxonomy curation, AI match quality monitoring, and immutable audit log exploration.
+- Strict `AdminGuard` enforcement.
+
+---
+
+## 18. Security & Privacy Architecture
+Comprehensive defense-in-depth:
+- Dual-token JWT with Argon2id hashing and token family rotation.
+- Role-based and ownership-based access control protecting against IDOR.
+- Material Non-Public Information (MNPI) protection via masked project alias names in marketplace discovery.
+
+---
+
+## 19. API Architecture
+API-first contract defined in OpenAPI 3.0 specification (`docs/api/openapi.yaml`):
+- RESTful JSON endpoints prefixed with `/api/v1/`.
+- Uniform pagination, error responses, and validation via NestJS global pipes and interceptors.
+
+---
+
+## 20. Testing Architecture
+Automated testing across the testing pyramid:
+- Unit tests (Jest), Integration tests (PostgreSQL Testcontainers), AI Grounding benchmark suite, E2E tests (Playwright), and Security penetration suites.
+
+---
+
+## 21. CI/CD Architecture
+Automated GitHub Actions pipeline (`.github/workflows/ci.yml`):
+- Linting, typechecking, unit tests, integration tests, and build verification on every pull request.
+
+---
+
+## 22. Deployment Architecture
+Containerized cloud deployments:
+- Multi-stage Docker containers deployed across managed container platforms (AWS ECS Fargate / Cloud Run).
+- Zero-downtime rolling deployments with pre-deployment Prisma migrations and automated health check rollbacks.
+
+---
+
+## 23. Observability Architecture
+Four-pillar observability:
+- High-speed structured JSON logging (Pino) with correlation `x-request-id`.
+- Centralized exception tracking (Sentry).
+- Metrics and health monitoring (OpenTelemetry / Prometheus).
+- Database-backed immutable security audit logging (`AuditLog`).
+
+---
+
+## 24. Background Jobs & Asynchronous Processing
+Non-blocking background workloads powered by BullMQ on Redis 7+:
+- Dedicated queues for `ai-matching`, `notifications`, `file-processing`, `calendar-reminders`, and `analytics-aggregation`.
+- Automatic exponential backoff retries and dead-letter queues (DLQ).
+
+---
+
+## 25. Mobile Readiness
+Designed from day one for a future Flutter mobile client:
+- Headless NestJS REST and Socket.IO API consumed identically by web and mobile.
+- Token refresh flow compatible with mobile secure storage; push notification abstractions in place.
+
+---
+
+## 26. Scalability Architecture
+Engineered to scale from Day 1 to 10x volume (1,000 PE firms, 20,000 consultants, 5,000 projects):
+- Single PostgreSQL database supports target volume without sharding; Redis caching offloads session and query loads; Socket.IO Redis adapter enables horizontal API pod scaling.
+
+---
+
+## 27. Traceability Matrix
+Complete traceability mapping in `docs/architecture/traceability-matrix.md`:
+- 26 out of 26 core functional requirements are 100% covered across System Components, Domain Entities, API Endpoints, Frontend Views, and Test Strategies. Zero requirements silently dropped.
+
+---
+
+## 28. Risk Register
+Active Risk Register maintained in `docs/architecture/risk-register.md`:
+- 12 critical risks identified, classified, and paired with active technical mitigations (AI hallucination, MNPI leakage, credential fraud, firewall interception, vendor lock-in).
 
 ---
 
 ## 29. Open Decisions
-
-Explicitly tracked in `docs/product/open-questions.md`:
-- `OQ-01`: Platform Monetization Model (Subscription vs. Success Commission). Decoupled from Phase 1-2 core architecture.
-- `OQ-04`: Bidirectional Google / Outlook Calendar OAuth Sync. Platform provides native .ics dispatch as baseline; OAuth sync hooks reserved for Phase 3.
-- `OQ-08`: Formal institutional SLA with financial penalties. Deferred until commercial enterprise customer tiers are contracted.
-
----
-
-## 30. Risks
-
-Comprehensive Risk Register authored in `docs/architecture/risk-register.md` tracking 12 architectural risks (AI hallucination, PE deal leakage, credential fraud, rate limits, enterprise firewalls, search ranking bias, malware, etc.) with explicit probabilities, impacts, severities, and mitigations.
+Only provider-level selections remain open for commercial negotiation:
+- AI LLM provider commercial terms (Enterprise ZDR contract).
+- Production transactional email tier (Resend vs AWS SES).
+- Monetization billing engine (deferred to Phase 3).
 
 ---
 
-## 31. Known Limitations
-
-- High-concurrency vector indexing temporarily increases PostgreSQL CPU utilization; mitigated by tuned HNSW build parameters and read replicas.
-- Real-time Server-Sent Events (SSE) stream does not support native background wakeups on terminated iOS devices; mitigated by push notification adapter boundaries for mobile Phase 3.
+## 30. Files Removed (Cleanup Summary)
+In accordance with Section 33 of the Master Architecture Correction prompt, all duplicate, conflicting, and obsolete files were removed:
+- Removed obsolete ADR duplicate files:
+  - `docs/decisions/ADR-001-frontend-framework.md`
+  - `docs/decisions/ADR-002-backend-framework.md`
+  - `docs/decisions/ADR-003-primary-database.md`
+  - `docs/decisions/ADR-004-search-and-vector-retrieval.md`
+  - `docs/decisions/ADR-005-ai-llm-provider.md`
+  - `docs/decisions/ADR-006-object-storage.md`
+  - `docs/decisions/ADR-007-authentication-and-sessions.md`
+  - `docs/decisions/ADR-008-calendar-and-scheduling.md`
+  - `docs/decisions/ADR-009-realtime-and-event-messaging.md` (superseded by Socket.IO)
+  - `docs/decisions/ADR-010-observability-and-monitoring.md`
+- Removed duplicate technology evaluation files:
+  - `docs/architecture/04-technology-evaluation.md`
+  - `docs/architecture/05-final-technology-stack.md`
+- Removed redundant database directory:
+  - `apps/api/prisma` (consolidated into root `prisma/`)
 
 ---
 
-## 32. Validation Summary
+## 31. Files Created & Reorganized
+- **Root Prisma**: `prisma/schema.prisma`, `prisma/seed/seed.ts`
+- **Shared Packages**: `packages/validation/`, `packages/config/`, `packages/ui/`, `packages/shared-types/`
+- **Backend Architecture (`apps/api/src/`)**: 17 domain modules, infrastructure modules (`ai`, `database`, `email`, `observability`, `realtime`, `search`, `storage`), common filters, guards, interceptors, `app.module.ts`, `main.ts`
+- **Frontend Architecture (`apps/web/`)**: Route groups (`(public)`, `(auth)`, `(firm)`, `(consultant)`, `(admin)`), `features/`, `components/`, `app/page.tsx`, `layout.tsx`, `globals.css`
+- **13 Canonical ADRs**: `ADR-001-frontend.md` through `ADR-013-observability.md`
+- **Complete Architecture Specifications**: 27 harmonized documents (`00` to `26`, `traceability-matrix`, `risk-register`, `architecture-audit`)
+- **Product Documentation**: `user-roles.md`, `user-flows.md`, `feature-matrix.md`, `business-rules.md`, `non-functional-requirements.md`, `glossary.md`
+- **CI & Tooling**: `.github/workflows/ci.yml`, `scripts/development/setup-dev.ps1`, `scripts/database/migrate-and-seed.ps1`
 
-- **Cross-Document Consistency:** Verified 100% alignment across README, ADRs, System Components, Domain Models, Database Schemas, API Contracts, and Deployment Specs. Zero contradictions.
-- **Traceability:** 26 of 26 functional requirements mapped end-to-end to components, entities, APIs, UI routes, and tests in `docs/architecture/traceability-matrix.md`.
-- **Quality Gates:** All 26 individual Phase 1 task completion reports exist in `docs/phase-reports/phase-1/` and are verified `COMPLETE`.
+---
+
+## 32. Validation Results
+- Monorepo workspace configuration verified via `pnpm-workspace.yaml` and `turbo.json`.
+- Zero duplicate or conflicting files.
+- Realtime messaging protocol unified on WebSockets / Socket.IO.
+- Zero secrets committed.
 
 ---
 
 ## 33. Final Architecture Audit
-
-Audited across Product Coverage, AI Safety, Security & Privacy, Data Architecture, API Contracts, Testing, Operations, and Architectural Quality Bar in `docs/architecture/26-final-architecture-audit.md`.
+Comprehensive production readiness review conducted across all architecture dimensions:
+- Architecture: Modular, clean dependency direction, API-first, mobile-ready.
+- Database: Complete 21-entity domain coverage, normalized relational integrity, vector/trigram search indexing.
+- AI: Grounded, confidence-aware, explainable, zero-hallucination guardrails.
+- Security: RBAC, Argon2id, token family rotation, IDOR prevention, MNPI masking.
+- Operations: Pino structured logging, Sentry APM, OpenTelemetry, containerized Docker deployments.
 
 ---
 
-## 34. Readiness for Phase 2
+### PHASE 1 STATUS:
+**PASS**
 
-$$\mathbf{PHASE\ 1\ STATUS:\ PASS}$$
-$$\mathbf{READY\ FOR\ PHASE\ 2:\ YES}$$
-
-In strict accordance with the Master Prompt instructions:
-- Phase 1 Production Architecture is **100% COMPLETE**.
-- Feature implementation has **NOT** been started.
-- The engineering team is fully prepared to begin **Phase 2 — Engineering Foundation & Application Scaffolding**.
+### READY FOR PHASE 2:
+**YES**
