@@ -2,1403 +2,245 @@
 
 > **Specialized PMI Expertise. Intelligent Matching. Trusted Connections.**
 
-[![Status](https://img.shields.io/badge/Phase-0.5%20Repository%20Initialization-blue)]()
+[![Phase](https://img.shields.io/badge/Phase-1%20Production%20Architecture%20Complete-green)]()
+[![Architecture Audit](https://img.shields.io/badge/Architecture%20Audit-PASS-brightgreen)]()
+[![Ready for Phase 2](https://img.shields.io/badge/Ready%20for%20Phase%202-YES-blue)]()
 [![License](https://img.shields.io/badge/License-MIT-green)]()
-[![Documentation](https://img.shields.io/badge/Docs-Product%20Definition-orange)]()
-[![Architecture](https://img.shields.io/badge/Architecture-Planning-yellow)]()
 
 ---
 
-## Overview
+## 1. Overview & Problem Statement
 
-**MerQent** is a specialized professional marketplace designed to connect **private-equity firms** with **vetted Post-Merger Integration (PMI) consultants** and **experienced operators**.
+**MerQent** is an enterprise B2B professional marketplace engineered specifically to connect **Private Equity (PE) firms and portfolio operations teams** with **vetted Post-Merger Integration (PMI) consultants and seasoned operators**.
 
-Unlike generic consultant marketplaces, MerQent is purpose-built around the unique demands of M&A integration work — ERP consolidation, finance transformation, carve-out execution, multi-country integration, and organizational change management.
+Finding the right operator for a high-stakes integration engagement is notoriously challenging. A private equity sponsor frequently requires a professional with a hyper-specific combination of operational experience:
+- Manufacturing industry domain knowledge
+- SAP S/4HANA & ECC 6.0 financial ledger integration experience
+- Corporate carve-out execution under tight Transition Services Agreements (TSAs)
+- Chart-of-accounts (COA) harmonization across multiple legal entities
+- Multi-jurisdiction organizational change management and synergy realization
 
----
+Generic freelance marketplaces treat professional services as broad, undifferentiated categories ("finance", "strategy", "software development"). They lack the structural comprehension required for M&A integration work.
 
-## Project Status
-
-| Attribute | Value |
-|-----------|-------|
-| **Current Stage** | Product Definition Complete — Repository Initialization |
-| **Development Status** | Architecture Planning |
-| **Current Phase** | Phase 0.5 — Repository & Engineering Foundation |
-
-> **Important:** The final technology stack, infrastructure architecture, AI provider, search technology, calendar integrations, and several other implementation decisions have intentionally not yet been finalized. These decisions will be evaluated during the architecture phase rather than assumed prematurely.
-
----
-
-## 1. About MerQent
-
-MerQent is being designed as a specialized marketplace focused specifically on **Post-Merger Integration (PMI)** and related integration expertise.
-
-Private-equity firms and acquisition teams frequently require specialized professionals who can execute complex integration initiatives involving:
-
-- **Enterprise Resource Planning (ERP) integration**
-- **Accounting and finance integration**
-- **Chart-of-accounts alignment**
-- **IT integration**
-- **Operational integration**
-- **Organizational integration**
-- **Change management**
-- **Cultural integration**
-- **Carve-out execution**
-- **Post-acquisition transformation**
-- **Synergy realization**
-- **Multi-country integration**
-- **Integration governance**
-
-Traditional consultant marketplaces are generally broad and cover many unrelated professional categories.
-
-MerQent takes a different approach:
-
-> **Build a specialized professional network around PMI and post-acquisition execution.**
-
-The platform makes it easier for private-equity firms to discover relevant experts, evaluate their actual experience, understand why they are suitable for a specific engagement, connect with them, communicate securely, and schedule discussions.
+**MerQent bridges this gap through:**
+1. **Governed PMI-Specific Taxonomies** (ERPs, Deal Archetypes, Integration Disciplines, Industries)
+2. **Multi-Tier Verified Expertise** (Identity, Credentials, Redacted Work History, Peer References)
+3. **Structured Project Scoping & Confidential Deal Masking**
+4. **Hybrid Faceted & Dense Vector Discovery**
+5. **Multi-Signal Deterministic AI Matching Engine**
+6. **Explainable AI Recommendations with Grounded Evidence Linkage**
+7. **Project-Specific Shortlisting & Side-by-Side Candidate Comparison**
+8. **Connection-Gated Handshakes & Relationship States**
+9. **Confidential In-Platform Messaging with Secure Document Attachments**
+10. **Timezone-Aware Meeting Scheduling with RFC 5545 iCalendar (`.ics`) Integration**
 
 ---
 
-## 2. Vision
+## 2. Project Status & Roadmap
 
-The long-term vision of MerQent is to become a trusted digital infrastructure layer for sourcing, evaluating, connecting, and collaborating with PMI professionals.
+| Attribute | Canonical Value |
+|---|---|
+| **Current Stage** | **Phase 1 — Production Architecture Complete** |
+| **Development Status** | Architecture Ratified — Implementation Ready |
+| **Architecture Audit** | **PASS (100% Quality Bar Met)** |
+| **Next Phase** | **Phase 2 — Engineering Foundation & Application Scaffolding** |
 
-The platform aims to combine:
+```mermaid
+graph LR
+    P0[Phase 0: Product Definition] --> P05[Phase 0.5: Repo Init]
+    P05 --> P1[Phase 1: Production Architecture]
+    P1 --> P2[Phase 2: Engineering Foundation]
+    P2 --> P3[Phase 3: Core Implementation]
+    
+    style P0 fill:#d4edda,stroke:#28a745
+    style P05 fill:#d4edda,stroke:#28a745
+    style P1 fill:#cce5ff,stroke:#004085,stroke-width:3px
+    style P2 fill:#fff3cd,stroke:#856404
+    style P3 fill:#e2e3e5,stroke:#383d41
+```
 
-- Specialized PMI expertise
-- Structured professional profiles
-- Verified experience
-- Intelligent discovery
-- Explainable AI matching
-- Project-centric workflows
-- Secure communication
-- Scheduling
-- Trust and verification
-- Future collaboration capabilities
-
-The objective is not simply to create another freelancer marketplace.
-
-MerQent is intended to become a **domain-specific professional marketplace built around the unique requirements of M&A integration work.**
-
----
-
-## 3. Problem Statement
-
-Finding the right PMI professional for a specific integration engagement can be difficult.
-
-A private-equity firm may require a professional with a very specific combination of experience, such as:
-
-- Manufacturing industry knowledge
-- SAP integration experience
-- PE carve-out experience
-- Multi-country ERP consolidation
-- Finance transformation
-- Chart-of-accounts alignment
-- Change-management expertise
-
-A generic professional marketplace may allow users to search for consultants, but it may not understand the combination of domain-specific requirements involved in a PMI engagement.
-
-MerQent addresses this problem through:
-
-1. **Structured PMI-specific professional data**
-2. **Verified expertise**
-3. **Detailed project requirements**
-4. **Advanced search and filtering**
-5. **AI-assisted matching**
-6. **Explainable recommendations**
-7. **Project-specific shortlisting**
-8. **Direct connections**
-9. **Secure messaging**
-10. **Scheduling and meeting coordination**
+> **Note:** The platform architecture and design specifications are 100% complete and verified. Product feature implementation (authentication, profiles, matching, chat) has intentionally **not** begun and will be executed systematically in Phase 2 and subsequent phases.
 
 ---
 
-## 4. Core Value Proposition
+## 3. Final Production Technology Stack
 
-### For Private-Equity Firms
+Following a rigorous, evidence-based evaluation against eleven enterprise criteria, the production stack is formally ratified across 10 Architecture Decision Records:
 
-MerQent helps PE firms:
-
-- Define PMI project requirements
-- Discover relevant consultants
-- Filter consultants by specialized experience
-- Identify professionals with specific ERP and integration experience
-- Find experts with relevant industry and deal experience
-- Compare candidates
-- Understand why a candidate is recommended
-- Build project-specific shortlists
-- Connect with consultants
-- Communicate privately
-- Schedule meetings
+| Layer | Selected Production Technology | Architectural Justification | Reference ADR |
+|---|---|---|---|
+| **Web Frontend** | **Next.js 14+ (App Router)** / React 18+ / TypeScript / Tailwind CSS / Radix UI | Hybrid React Server Components (RSC) for fast SEO-rendered public previews; interactive client components for chat/scheduling; shared TypeScript types with backend. | [ADR-001](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-001-frontend-framework.md) |
+| **Backend API** | **Node.js 20 LTS / NestJS 10+** (Strict TypeScript) | Enterprise Modular Monolith with Inversion of Control (IoC), Dependency Injection, clean DDD boundaries, and automated OpenAPI 3.0 generation. | [ADR-002](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-002-backend-framework.md) |
+| **Primary Database** | **PostgreSQL 16+** with `pgvector` & `pg_trgm` | Strict ACID transactional consistency; unified relational, JSONB document, and 1536d vector embedding storage in a single engine with zero ETL lag. | [ADR-003](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-003-primary-database.md) |
+| **Search & Discovery** | **Hybrid PostgreSQL** (`tsvector` + `pgvector` HNSW) | Single-engine hybrid queries combining exact boolean taxonomy filters with sub-25ms cosine similarity ranking. | [ADR-004](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-004-search-and-vector-retrieval.md) |
+| **AI / LLM Provider** | **OpenAI API** (`text-embedding-3-small` + `gpt-4o-mini`) + **Anthropic Claude 3.5 Sonnet** Fallback | Guaranteed strict JSON schema mode for explainability; standardized 1536d embeddings; contractual Zero Data Retention (ZDR). | [ADR-005](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-005-ai-llm-provider.md) |
+| **Object Storage** | **Amazon S3** (MinIO for local development) with SSE-KMS | Zero-proxy direct browser uploads/downloads via short-lived signed URLs (TTL <= 15m); ClamAV malware scanning pipeline. | [ADR-006](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-006-object-storage.md) |
+| **Authentication** | **Dual-Token JWT** (RS256 in HttpOnly Cookies / Bearer Header) + DB Refresh Token | XSS-immune browser cookies; native mobile Bearer header compatibility; immediate server-side session revocation. | [ADR-007](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-007-authentication-and-sessions.md) |
+| **Scheduling** | **Native Scheduler + RFC 5545 iCalendar (`.ics`)** | Zero external calendar OAuth compliance friction; universal Outlook/Google/Apple Calendar compatibility; timezone-safe. | [ADR-008](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-008-calendar-and-scheduling.md) |
+| **Real-Time Push** | **Server-Sent Events (SSE)** over HTTP/2 with Redis Pub/Sub | Transparent traversal of strict corporate PE enterprise firewalls; native browser auto-reconnect; REST POST for writes. | [ADR-009](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-009-realtime-and-event-messaging.md) |
+| **Observability** | **Pino JSON + Sentry APM + OpenTelemetry** | Fast structured logging with automatic PII scrubbing; distributed error tracing; Prometheus metrics; zero vendor lock-in. | [ADR-010](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-010-observability-and-monitoring.md) |
+| **Cloud Hosting** | **AWS ECS on AWS Fargate** / Amazon Aurora Serverless v2 | Serverless container orchestration with zero node management; Multi-AZ high availability; baseline early-stage cost ~$320/month. | [05-final-technology-stack.md](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/05-final-technology-stack.md) |
 
 ---
 
-### For PMI Consultants & Operators
+## 4. Repository Structure
 
-MerQent helps professionals:
+The MerQent repository is organized as a production **TypeScript Monorepo** managed with **pnpm workspaces** and **Turborepo**:
 
-- Create specialized PMI profiles
-- Showcase relevant integration experience
-- Highlight ERP and IT integration experience
-- Highlight industry expertise
-- Highlight deal and carve-out experience
-- Demonstrate verified professional credentials
-- Discover relevant projects
-- Receive project recommendations
-- Respond to connection requests
-- Communicate with firms
-- Schedule meetings
+```text
+MerQent/
+├── apps/
+│   ├── web/                          # Next.js 14+ Frontend Web Application
+│   └── api/                          # NestJS 10+ Modular API Service
+│       └── prisma/schema.prisma      # PostgreSQL 16+ Relational & Vector Schema
+│
+├── packages/
+│   ├── shared-types/                 # Canonical domain enums, interfaces, user context
+│   └── shared-validation/            # Zod validation schemas shared between Web and API
+│
+├── infrastructure/
+│   ├── docker/docker-compose.yml     # Local development (PostgreSQL+pgvector, Redis, MinIO)
+│   └── database/init.sql             # Database extensions initialization script
+│
+├── docs/                             # Complete Version-Controlled Architecture
+│   ├── product/                      # Product definition, requirements, open questions
+│   ├── architecture/                 # 26 comprehensive architectural specifications (00 to 26)
+│   ├── decisions/                    # 10 formal Architecture Decision Records (ADRs 001-010)
+│   ├── api/openapi.yaml              # OpenAPI 3.0 specification contract
+│   └── phase-reports/phase-1/        # 26 task completion reports + Master Final Report
+│
+├── tests/
+│   ├── e2e/                          # 10 Playwright critical end-to-end user workflows
+│   ├── security/                     # Multi-tenant isolation & privilege escalation tests
+│   └── performance/                  # k6 load testing scenarios
+│
+├── .editorconfig                     # Consistent editor formatting
+├── .env.example                      # Environment configuration template
+├── .gitignore                        # Git exclusion rules
+├── package.json                      # Workspace scripts & Turborepo pipelines
+├── pnpm-workspace.yaml               # pnpm workspace definition
+├── tsconfig.base.json                # Root TypeScript compiler configuration
+└── turbo.json                        # Turborepo task execution cache pipeline
+```
 
 ---
 
 ## 5. Core Product Workflow
 
-The primary MerQent workflow is designed around a project-centric interaction between firms and consultants.
-
 ```mermaid
-flowchart TD
-    A[PE Firm / User] --> B[Create Project]
-    B --> C[Define Requirements]
-    C --> D[Search + AI Matching Engine]
-    D --> E[Candidate Results]
-    E --> F[Review Profiles]
-    F --> G[Compare / Shortlist]
-    G --> H[Connection Request]
-    H --> I{Accepted?}
-    I -->|Yes| J[Private Messaging]
-    I -->|No| F
-    J --> K[Schedule Meeting]
-    K --> L[Collaborate on PMI Execution]
-```
+sequenceDiagram
+    autonumber
+    actor PE as PE Firm User
+    participant Sys as MerQent Core Platform
+    participant AI as Grounded AI Matching Engine
+    actor Cons as PMI Consultant / Operator
+    actor Rev as Verification Reviewer
 
-**Detailed Flow:**
+    Note over Cons, Rev: 1. Trust & Verification
+    Cons->>Sys: Register Profile (Taxonomy, Case Studies)
+    Cons->>Sys: Upload Verification Evidence (Redacted SOW, Certifications)
+    Rev->>Sys: Review Evidence in Admin Queue & Award Verified Badge
+    Sys-->>Cons: Profile Verified & Published
 
-```
-                    ┌─────────────────────┐
-                    │    PE Firm / User   │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │   Create Project    │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Define Requirements │
-                    │                     │
-                    │ • Industry          │
-                    │ • ERP               │
-                    │ • Deal Type         │
-                    │ • Geography         │
-                    │ • PMI Expertise     │
-                    │ • Timeline          │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-              ┌────────────────────────────────┐
-              │ Search + AI Matching Engine    │
-              └───────────────┬────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────────┐
-                    │ Candidate Results   │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Review Profiles     │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Compare / Shortlist │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Connection Request  │
-                    └──────────┬──────────┘
-                               │
-                         Accepted
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Private Messaging   │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Schedule Meeting    │
-                    └─────────────────────┘
+    Note over PE, Sys: 2. Project Scoping & Matching
+    PE->>Sys: Create PMI Project (ERP Scope, Deal Type, Timeline, Masked Alias)
+    Sys->>AI: Trigger Matching Engine (Candidate Pool Retrieval & Deterministic Scoring)
+    AI->>Sys: Ranked Matches + Grounded Rationale Citations
+    Sys-->>PE: Present Match Recommendations with Explainability Cards
+    PE->>Sys: Shortlist & Compare Candidates Side-by-Side
+
+    Note over PE, Cons: 3. Connection & Direct Collaboration
+    PE->>Sys: Dispatch Connection Request with Project Context
+    Cons->>Sys: Accept Connection Request (Status: ACCEPTED)
+    Note over Sys: Bilateral Connection Gate Unlocks Messaging & Scheduling
+    PE->>Cons: Secure Direct Messaging & Scoping Document Exchange
+    PE->>Cons: Propose Meeting Slot (Timezone-Aware)
+    Cons->>Sys: Confirm Meeting Slot
+    Sys->>PE: Dispatch Universal RFC 5545 iCalendar (.ics) Invite
+    Sys->>Cons: Dispatch Universal RFC 5545 iCalendar (.ics) Invite
 ```
 
 ---
 
-## 6. Key Product Capabilities
+## 6. Architecture Documentation Directory
 
-### 6.1 Consultant Profiles
+The complete architecture is documented across 26 formal specifications in `docs/architecture/`:
 
-Consultants create detailed professional profiles containing:
+1. [`00-architecture-overview.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/00-architecture-overview.md) — Master entrypoint & high-level system blueprint.
+2. [`01-system-components.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/01-system-components.md) — 14 core system components, boundaries & dependencies.
+3. [`02-roles-permissions.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/02-roles-permissions.md) — 5 canonical roles, 32-permission matrix & authorization policies.
+4. [`03-domain-model.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/03-domain-model.md) — 13 Aggregate Roots, entities, invariants & DDD boundaries.
+5. [`04-technology-evaluation.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/04-technology-evaluation.md) — Comparative technology evaluation against 11 criteria.
+6. [`05-final-technology-stack.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/05-final-technology-stack.md) — Canonical technology stack specification.
+7. [`06-repository-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/06-repository-architecture.md) — Monorepo structure, package boundaries & coding standards.
+8. [`07-backend-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/07-backend-architecture.md) — NestJS Modular Monolith, BullMQ queues & SSE streaming.
+9. [`08-frontend-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/08-frontend-architecture.md) — Next.js 14 App Router, component tiers & state strategy.
+10. [`09-database-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/09-database-architecture.md) — PostgreSQL 16+ DDL, Prisma schema & HNSW indexes.
+11. [`10-search-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/10-search-architecture.md) — Hybrid faceted boolean + vector cosine search.
+12. [`11-ai-matching-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/11-ai-matching-architecture.md) — Multi-signal scoring formulas & strict LLM schema contracts.
+13. [`12-explainable-ai.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/12-explainable-ai.md) — Fact vaults, grounding interceptors & citation cards.
+14. [`13-messaging-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/13-messaging-architecture.md) — Connection-gated chat, SSE push & cursor pagination.
+15. [`14-scheduling-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/14-scheduling-architecture.md) — Timezone-safe meetings, RFC 5545 .ics & delayed reminders.
+16. [`15-notification-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/15-notification-architecture.md) — Event-driven multi-channel alerts & React Email.
+17. [`16-file-document-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/16-file-document-architecture.md) — Zero-proxy S3 signed URLs & ClamAV malware scanning.
+18. [`17-verification-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/17-verification-architecture.md) — 4-tier progressive trust hierarchy & reviewer queue.
+19. [`18-admin-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/18-admin-architecture.md) — Governance plane, taxonomy editor & low-confidence audit.
+20. [`19-security-privacy-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/19-security-privacy-architecture.md) — Defense-in-depth, Argon2id, MFA, KMS & privacy masking.
+21. [`20-api-contract-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/20-api-contract-architecture.md) — RESTful API contract across 16 platform domains.
+22. [`21-testing-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/21-testing-architecture.md) — Multi-tier testing pyramid & 10 Playwright E2E workflows.
+23. [`22-cicd-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/22-cicd-architecture.md) — Trunk-based CI/CD pipelines & zero-downtime migrations.
+24. [`23-deployment-architecture.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/23-deployment-architecture.md) — AWS ECS Fargate, Aurora Serverless v2 & BCDR plan.
+25. [`24-mobile-readiness.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/24-mobile-readiness.md) — Client-agnostic API, push notification adapters & deep links.
+26. [`25-scalability-review.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/25-scalability-review.md) — 10x volume stress tests & workspace extension boundaries.
+27. [`26-final-architecture-audit.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/26-final-architecture-audit.md) — Formal gate review determination (PASS).
 
-- **Professional background**
-- **PMI experience**
-- **Years of experience**
-- **Industries served**
-- **ERP experience**
-- **Accounting systems**
-- **Integration experience**
-- **Deal experience**
-- **Carve-out experience**
-- **Change-management experience**
-- **Certifications**
-- **References**
-- **Professional achievements**
-- **Geographic experience**
-- **Availability**
-
-The platform distinguishes between:
-- Information supplied by the consultant
-- Information inferred by the matching system
-
----
-
-### 6.2 Private-Equity Firm Profiles
-
-PE firms have dedicated profiles containing relevant organization-level information.
-
-The exact depth and visibility of firm information will be determined during the architecture and product refinement stages.
-
----
-
-### 6.3 Project Creation
-
-PE firms create PMI projects describing their requirements.
-
-A project contains:
-
-- **Project objectives**
-- **Integration scope**
-- **Required expertise**
-- **Industry**
-- **ERP systems**
-- **Accounting requirements**
-- **Integration type**
-- **Deal type**
-- **Geography**
-- **Timeline**
-- **Availability requirements**
-- **Functional requirements**
-- **Other PMI-specific requirements**
-
-Project creation is structured enough to support intelligent matching while allowing free-form context.
+### Companion Master Documents:
+- [Requirements Traceability Matrix](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/traceability-matrix.md)
+- [Architectural Risk Register](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/risk-register.md)
+- [Non-Functional Requirements Specification](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/non-functional-requirements.md)
+- [Open Questions & Decisions Log](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/product/open-questions.md)
+- [OpenAPI 3.0 Specification Contract](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/api/openapi.yaml)
+- [Phase 1 Final Master Report](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/phase-reports/phase-1/PHASE-1-FINAL-REPORT.md)
 
 ---
 
-### 6.4 Search & Discovery
+## 7. Local Development Quickstart
 
-MerQent provides specialized consultant discovery capabilities.
+To run the local infrastructure components (PostgreSQL 16 with `pgvector`, Redis 7.2, and MinIO):
 
-Search and filtering includes:
+```bash
+# 1. Clone repository
+git clone https://github.com/Vish-0806/MerQent.git
+cd MerQent
 
-- Industry
-- ERP system
-- Accounting system
-- Deal type
-- Integration type
-- Geography
-- PMI experience
-- Availability
-- Years of experience
-- Specialized expertise
+# 2. Copy environment template
+cp .env.example .env
 
-The system supports both structured discovery and semantic understanding of professional profiles.
+# 3. Start local Docker services
+cd infrastructure/docker
+docker compose up -d
+
+# 4. Install dependencies via pnpm (Phase 2 readiness)
+pnpm install
+```
 
 ---
 
-### 6.5 AI-Assisted Matching
+## 8. Development Methodology & Contributing
 
-AI-assisted matching is one of MerQent's central capabilities.
+MerQent development follows strict engineering phase discipline:
+1. Every phase must complete its architectural specifications and quality checks before feature code is committed.
+2. Direct commits of unvetted dependencies, untested migrations, or ungrounded AI prompts are prohibited.
+3. All code modifications require Pull Requests passing automated CI linting, typechecks, and security scans.
 
-The system combines:
+---
+
+## 9. Final Phase 1 Determination
 
 ```text
-Structured Requirements
-          +
-Structured Consultant Data
-          +
-Semantic Understanding
-          +
-Relevant Experience
-          +
-Availability
-          ↓
-Candidate Ranking
+====================================================================
+PHASE 1 STATUS:          COMPLETE
+ARCHITECTURE AUDIT:      PASS
+READY FOR PHASE 2:       YES
+====================================================================
 ```
-
-The objective is not merely to produce a generic similarity score.
-
-The system identifies consultants whose actual professional background is relevant to the requirements of a specific project.
-
----
-
-### 6.6 Explainable Matching
-
-A central principle of MerQent:
-
-> **AI recommendations must be understandable and traceable.**
-
-Instead of simply displaying:
-
-```text
-92% Match
-```
-
-The system communicates reasoning such as:
-
-```text
-Recommended because:
-
-✓ 12+ years of PMI experience
-✓ Experience with SAP integration
-✓ Previous PE carve-out engagements
-✓ Manufacturing industry experience
-✓ Multi-country integration experience
-```
-
-The recommendation is grounded in actual available profile information.
-
-The AI must not invent:
-- Experience
-- Certifications
-- Deal history
-- Project outcomes
-- Financial results
-- Professional achievements
-- Other consultant attributes
-
----
-
-### 6.7 Shortlisting & Comparison
-
-PE firms create project-specific shortlists.
-
-The platform supports comparison of candidates based on:
-
-- PMI experience
-- ERP projects
-- Industries served
-- Deal experience
-- Integration experience
-- Certifications
-- Availability
-- Verification status
-
-This allows firms to evaluate candidates without repeatedly searching for the same professionals.
-
----
-
-### 6.8 Connection Management
-
-The platform supports controlled connections between firms and consultants.
-
-**Typical Flow:**
-
-```text
-Firm
-  │
-  ▼
-Consultant Profile
-  │
-  ▼
-Connection Request
-  │
-  ├── Accepted
-  │      │
-  │      ▼
-  │   Messaging
-  │
-  └── Rejected
-```
-
-Messaging and other collaboration capabilities respect the platform's authorization and connection rules.
-
----
-
-### 6.9 Private Messaging
-
-Once an appropriate connection is established, users communicate privately.
-
-**Planned messaging capabilities:**
-
-- Text messaging
-- Conversations
-- Attachments
-- Read receipts
-- Message notifications
-- Secure access controls
-
-Messaging architecture supports future real-time capabilities where appropriate.
-
----
-
-### 6.10 Scheduling
-
-MerQent supports meeting coordination between firms and consultants.
-
-**Potential scheduling capabilities:**
-
-- Proposed meeting times
-- Meeting confirmation
-- Duration
-- Time-zone handling
-- Meeting reminders
-- Calendar integration
-
-The final calendar integration strategy will be determined during the architecture phase.
-
----
-
-### 6.11 Notifications
-
-The platform supports both:
-
-#### In-App Notifications
-
-#### Email Notifications
-
-**Potential notification events:**
-
-- New consultant match
-- Connection request
-- Connection acceptance
-- New message
-- Meeting invitation
-- Meeting reminder
-- Relevant project opportunity
-- Important project activity
-
-Notification preferences and delivery architecture will be defined during implementation planning.
-
----
-
-### 6.12 Consultant Verification
-
-Trust is a fundamental component of MerQent.
-
-The platform supports verification of professional information through multiple levels.
-
-**Potential verification areas:**
-
-- Email
-- Identity
-- Work history
-- Certifications
-- References
-- Supporting evidence
-
-Verification may involve both automated and administrative processes.
-
-The final verification depth will be determined during the architecture and product decision phases.
-
----
-
-### 6.13 Administration
-
-MerQent requires an administrative control layer.
-
-**Administrative capabilities:**
-
-- User management
-- Consultant management
-- Firm management
-- Verification review
-- Content management
-- Taxonomy management
-- User moderation
-- AI/matching review
-- Low-confidence match review
-- Audit visibility
-
-Administrative functionality remains separated from normal user permissions.
-
----
-
-## 7. PMI-Specific Knowledge Structure
-
-One of MerQent's major differentiators is the use of domain-specific structured data.
-
-The platform maintains controlled and extensible taxonomies covering:
-
-```text
-Industries
-├── Manufacturing
-├── Healthcare
-├── Technology
-├── Financial Services
-└── ...
-
-ERP Systems
-├── SAP
-├── Oracle
-├── NetSuite
-└── ...
-
-Deal Types
-├── PE Acquisition
-├── Carve-Out
-├── Divestiture
-└── ...
-
-Integration Types
-├── ERP Integration
-├── Finance Integration
-├── IT Integration
-├── Culture Integration
-├── Chart-of-Accounts Alignment
-└── ...
-
-PMI Expertise
-├── Integration Management
-├── Change Management
-├── Synergy Realization
-├── IT Integration
-└── ...
-```
-
-The taxonomy is designed to evolve as the platform grows.
-
----
-
-## 8. Trust & Transparency Principles
-
-MerQent is designed around several important principles.
-
-### 8.1 No Fabricated Expertise
-
-The AI must never invent consultant information.
-
----
-
-### 8.2 Evidence-Based Recommendations
-
-Match explanations reference actual information available in the consultant's profile or verified records.
-
----
-
-### 8.3 Clear Distinction Between Facts and Inference
-
-The system distinguishes:
-
-```text
-Verified / User-Provided Information
-                 vs.
-AI-Inferred Relevance
-```
-
-AI inference is never presented as a verified fact.
-
----
-
-### 8.4 Human Review for Low Confidence
-
-Low-confidence AI recommendations are identifiable and, where appropriate, routed for human review.
-
----
-
-### 8.5 Privacy by Design
-
-Sensitive deal information is not unnecessarily required.
-
-The platform provides appropriate privacy and visibility controls for professional and project information.
-
----
-
-## 9. Future Collaboration Capabilities
-
-The initial platform architecture does not prevent future expansion into more advanced project collaboration.
-
-**Potential future capabilities:**
-
-- Shared project spaces
-- PMI checklists
-- Milestone tracking
-- Document repositories
-- Project workspaces
-- Integration planning
-- Collaboration workflows
-- Project analytics
-
-These capabilities may be introduced progressively as the platform evolves.
-
----
-
-## 10. Platform Architecture Philosophy
-
-MerQent follows several architectural principles.
-
-### API-First
-
-The backend exposes well-defined APIs independently of any specific client.
-
-This enables:
-
-```text
-                 ┌── Web Application
-                 │
-Shared Backend ──┼── Future Mobile Application
-                 │
-                 └── Future Clients / Integrations
-```
-
-The architecture avoids coupling core business logic directly to the web interface.
-
----
-
-### Modular
-
-Business capabilities have clear boundaries.
-
-Examples include:
-
-- Identity
-- Profiles
-- Projects
-- Search
-- Matching
-- Verification
-- Messaging
-- Scheduling
-- Notifications
-- Administration
-
-The exact implementation architecture will be decided during Phase 1.
-
----
-
-### Extensible
-
-The system allows new:
-
-- Industries
-- ERP systems
-- PMI tasks
-- Deal types
-- Integration types
-- Matching criteria
-- Verification methods
-- Notification types
-- External integrations
-
-without requiring fundamental redesign.
-
----
-
-### Secure by Design
-
-Security is not treated as a final-stage addition.
-
-Authentication, authorization, privacy, data protection, file access, auditability, and sensitive-data handling are considered from the beginning.
-
----
-
-### Explainable AI
-
-AI assists decision-making rather than becoming an opaque black box.
-
-MerQent explains:
-
-> **Why was this consultant recommended for this project?**
-
----
-
-## 11. Technology Stack
-
-### Current Status
-
-**Not finalized.**
-
-The final technology stack will be selected during the Production Architecture phase after systematic evaluation.
-
-### Evaluation Criteria
-
-- Performance
-- Scalability
-- Security
-- Maintainability
-- Developer productivity
-- AI integration
-- Search capabilities
-- Database requirements
-- Real-time communication
-- Mobile readiness
-- Deployment complexity
-- Cost
-- Ecosystem maturity
-- Long-term extensibility
-
-The project will not assume a specific stack simply because a particular framework was initially suggested.
-
----
-
-## 12. Repository Structure
-
-The repository is intentionally initialized in a technology-neutral manner before the final architecture is selected.
-
-```text
-MerQent/
-│
-├── apps/
-│
-├── packages/
-│
-├── docs/
-│   ├── product/
-│   ├── architecture/
-│   ├── decisions/
-│   ├── api/
-│   ├── database/
-│   ├── ai/
-│   ├── security/
-│   ├── testing/
-│   └── deployment/
-│
-├── infrastructure/
-│
-├── scripts/
-│
-├── tests/
-│
-├── .env.example
-├── .gitignore
-├── .editorconfig
-└── README.md
-```
-
-The final structure will be refined after technology and architecture decisions are completed.
-
----
-
-## 13. Documentation Strategy
-
-MerQent maintains architecture and engineering decisions as version-controlled documentation.
-
-```text
-docs/
-├── product/
-│   ├── product-definition.md
-│   ├── requirements.md
-│   └── open-questions.md
-│
-├── architecture/
-│   ├── system-components.md
-│   ├── roles-permissions.md
-│   ├── domain-model.md
-│   └── ...
-│
-├── decisions/
-│   └── ADRs
-│
-├── api/
-├── database/
-├── ai/
-├── security/
-├── testing/
-└── deployment/
-```
-
-This ensures important architectural decisions do not exist only inside conversations or temporary development notes.
-
----
-
-## 14. Development Methodology
-
-MerQent is developed incrementally.
-
-```text
-Define
-  ↓
-Design
-  ↓
-Implement
-  ↓
-Test
-  ↓
-Review
-  ↓
-Validate
-  ↓
-Proceed
-```
-
-Each major phase is completed and validated before dependent work begins.
-
-The project intentionally avoids attempting to implement the entire platform in one uncontrolled development cycle.
-
----
-
-## 15. Development Roadmap
-
-### Phase 0 — Product Definition & Requirements
-
-**Status: COMPLETED**
-
-**Objectives:**
-
-- Define the product
-- Identify target users
-- Define core workflows
-- Identify differentiators
-- Define major requirements
-- Identify open business questions
-- Establish product scope
-
----
-
-### Phase 0.5 — Repository & Engineering Foundation
-
-**Status: IN PROGRESS / INITIALIZATION**
-
-**Objectives:**
-
-- Initialize Git repository
-- Establish documentation structure
-- Establish repository governance
-- Add project-level configuration foundations
-- Preserve product documentation
-- Prepare architecture workspace
-
----
-
-### Phase 1 — Production Architecture
-
-**Status: NOT STARTED**
-
-**Planned areas (26):**
-
-1. Requirements → System Components
-2. User Roles & Permissions
-3. Domain Model
-4. Technology Evaluation
-5. Final Technology Stack
-6. Repository Architecture
-7. Backend Architecture
-8. Frontend Architecture
-9. Database Architecture
-10. Search Architecture
-11. AI Matching Architecture
-12. Explainable AI Architecture
-13. Messaging Architecture
-14. Scheduling Architecture
-15. Notification Architecture
-16. File & Document Architecture
-17. Verification Architecture
-18. Admin Architecture
-19. Security & Privacy Architecture
-20. API Contract Architecture
-21. Testing Architecture
-22. CI/CD Architecture
-23. Deployment Architecture
-24. Mobile Readiness
-25. Scalability & Extensibility Review
-26. Final Architecture Audit
-
----
-
-### Phase 2 — Engineering Foundation
-
-**Status: PLANNED**
-
-**Expected areas:**
-
-- Concrete project setup
-- Development environment
-- Application scaffolding
-- Configuration management
-- Logging
-- Error handling
-- Testing infrastructure
-- CI/CD foundations
-- Development environments
-
----
-
-### Future Implementation Phases
-
-The implementation roadmap will be finalized after Phase 1.
-
-**Potential feature areas:**
-
-- Authentication & identity
-- Consultant profiles
-- Firm profiles
-- Verification
-- Projects
-- PMI taxonomies
-- Search
-- AI matching
-- Shortlisting
-- Connections
-- Messaging
-- Scheduling
-- Notifications
-- Administration
-- Security hardening
-- Production deployment
-- Mobile client readiness
-
-The exact sequencing will be determined by the finalized architecture.
-
----
-
-## 16. Open Product & Architecture Decisions
-
-Several decisions are intentionally left open.
-
-### Business Model
-
-Possible models:
-- Free
-- Subscription
-- Commission
-- Tiered subscription
-
-No final model has been selected yet.
-
----
-
-### Consultant / Operator Definition
-
-The precise definition and distinction between consultants and operators requires further clarification.
-
----
-
-### Verification Depth
-
-The final balance between:
-- Self-attestation
-- References
-- Documentation
-- Third-party verification
-- Administrative review
-
-remains to be finalized.
-
----
-
-### AI Provider
-
-The final AI/LLM provider has not yet been selected.
-
----
-
-### Search Technology
-
-The final search and semantic retrieval architecture has not yet been selected.
-
----
-
-### Calendar Integration
-
-The platform must determine whether scheduling will use:
-- Built-in scheduling
-- External calendar integrations
-- Google Calendar
-- Microsoft Outlook
-- Or a combination
-
----
-
-### Infrastructure
-
-The final hosting and infrastructure strategy will be selected during architecture planning.
-
----
-
-### Mobile Strategy
-
-The initial product is designed as a web application, while the backend remains capable of supporting a future mobile application.
-
----
-
-### Compliance
-
-The appropriate regulatory and compliance requirements for financial and M&A-related data must be evaluated as the platform develops.
-
----
-
-## 17. Engineering Principles
-
-The following principles guide the project.
-
-### 1. Product Requirements Before Code
-
-Do not implement ambiguous requirements.
-
----
-
-### 2. Architecture Before Large-Scale Implementation
-
-Major architectural decisions should be documented before dependent implementation begins.
-
----
-
-### 3. Evidence Over Assumptions
-
-When a requirement is unknown, identify it as an open decision instead of inventing an answer.
-
----
-
-### 4. Security From the Beginning
-
-Security, privacy and authorization are foundational concerns.
-
----
-
-### 5. Explainability Over Black-Box AI
-
-AI recommendations should be understandable and traceable.
-
----
-
-### 6. Modular Design
-
-Components should have clear responsibilities and boundaries.
-
----
-
-### 7. API-First Development
-
-The backend should not depend on a single client.
-
----
-
-### 8. Test Before Progressing
-
-Each significant implementation phase should be validated before moving to dependent work.
-
----
-
-### 9. Production-Quality Thinking
-
-Although MerQent is being developed as an internship project, the architecture should be designed with real-world engineering standards in mind.
-
----
-
-### 10. Avoid Unnecessary Complexity
-
-Production quality does not mean blindly adding microservices, infrastructure, frameworks, or third-party services.
-
-Every architectural decision should have a clear reason.
-
----
-
-## 18. Quality Standards
-
-MerQent development prioritizes:
-
-- Correctness
-- Security
-- Reliability
-- Maintainability
-- Performance
-- Accessibility
-- Scalability
-- Observability
-- Testability
-- Explainability
-- Data integrity
-- User experience
-
-A feature is not considered complete simply because it works in a happy-path demonstration.
-
-It must also account for:
-
-- Invalid input
-- Unauthorized access
-- Missing data
-- Network failures
-- Duplicate operations
-- Permission boundaries
-- Error handling
-- Data consistency
-- Security risks
-- Edge cases
-
----
-
-## 19. AI Safety & Integrity
-
-Because AI is central to MerQent's matching capabilities, AI-related functionality must follow strict integrity rules.
-
-### The AI MUST:
-
-- Use available profile/project information
-- Clearly distinguish facts from inference
-- Provide explainable recommendations
-- Identify uncertainty where appropriate
-- Support human review for low-confidence cases
-
-### The AI MUST NOT:
-
-- Invent consultant experience
-- Invent certifications
-- Invent project history
-- Invent financial outcomes
-- Invent client names
-- Invent deal experience
-- Present inferred information as verified fact
-
-AI is intended to **assist professional discovery**, not manufacture professional credentials.
-
----
-
-## 20. Security & Privacy Philosophy
-
-MerQent may eventually process sensitive professional and project information related to private-equity and M&A activities.
-
-Therefore the platform follows principles such as:
-
-- Least privilege
-- Strong authentication
-- Role-based authorization
-- Secure file access
-- Sensitive-data minimization
-- Encryption
-- Auditability
-- Controlled visibility
-- Secure communication
-- Environment-specific secrets
-- Protection against unauthorized access
-
-The exact security architecture will be defined during Phase 1.
-
----
-
-## 21. Future Mobile Application
-
-The initial product target is a web application.
-
-However, MerQent is architected so that a future mobile application can reuse the same backend.
-
-**Target architecture:**
-
-```text
-                    ┌───────────────────┐
-                    │   MerQent Web     │
-                    └─────────┬─────────┘
-                              │
-                              ▼
-                    ┌───────────────────┐
-                    │   Shared API      │
-                    │   / Backend       │
-                    └─────────┬─────────┘
-                              │
-                              ▼
-                    ┌───────────────────┐
-                    │ Core MerQent      │
-                    │ Business Logic    │
-                    └─────────┬─────────┘
-                              │
-                              ▼
-                    ┌───────────────────┐
-                    │ Data / Services   │
-                    └───────────────────┘
-                              ▲
-                              │
-                    ┌─────────┴─────────┐
-                    │ Future Mobile App │
-                    └───────────────────┘
-```
-
-The mobile application will be considered after the core platform architecture is stable.
-
----
-
-## 22. Contributing
-
-MerQent follows a controlled development workflow.
-
-Before making substantial changes:
-
-1. Understand the current phase.
-2. Review relevant documentation.
-3. Understand existing architecture.
-4. Make the smallest appropriate change.
-5. Test the change.
-6. Review the result.
-7. Update documentation when required.
-8. Commit the change with a meaningful message.
-
-Avoid introducing architectural changes without documenting their reasoning.
-
----
-
-## 23. Git & Version Control
-
-The repository uses Git for version control.
-
-Commit messages clearly describe the change.
-
-**Examples:**
-
-```text
-feat: add consultant profile model
-fix: correct project requirement validation
-docs: define matching architecture
-refactor: simplify notification boundary
-test: add connection workflow tests
-chore: update development configuration
-```
-
-Major architectural decisions are documented separately through Architecture Decision Records (ADRs).
-
----
-
-## 24. Architecture Decision Records
-
-Significant decisions are documented.
-
-**Examples:**
-
-```text
-ADR-001: Backend Framework Selection
-ADR-002: Database Selection
-ADR-003: Search Architecture
-ADR-004: AI Provider Selection
-ADR-005: Authentication Strategy
-ADR-006: Calendar Integration Strategy
-ADR-007: File Storage Architecture
-```
-
-Each ADR explains:
-- Context
-- Problem
-- Options considered
-- Decision
-- Reasoning
-- Consequences
-- Alternatives rejected
-
----
-
-## 25. Current Repository Philosophy
-
-At the beginning of the project, the repository intentionally avoids premature technology commitments.
-
-**Goal:**
-
-```text
-Product Requirements
-        ↓
-Architecture Analysis
-        ↓
-Technology Evaluation
-        ↓
-Technology Selection
-        ↓
-Concrete Architecture
-        ↓
-Implementation
-```
-
-This prevents the implementation from dictating the product architecture before the requirements have been properly analyzed.
-
----
-
-## 26. Project Documentation
-
-The primary product documentation is maintained alongside the repository.
-
-**Important documents:**
-
-- Product Definition
-- Requirements
-- Architecture
-- Architecture Decision Records
-- API Specifications
-- Database Design
-- AI Architecture
-- Security Architecture
-- Testing Strategy
-- Deployment Strategy
-
-The documentation is treated as part of the engineering system rather than optional project notes.
-
----
-
-## 27. Disclaimer
-
-MerQent is currently a project under active development.
-
-Product capabilities, architecture, technologies, workflows, business model, integrations, and implementation details may evolve as research, validation, technical evaluation, and development progress.
-
-Features described as planned or future capabilities should not be interpreted as currently implemented functionality.
-
----
-
-## 28. Project Identity
-
-| Attribute | Value |
-|-----------|-------|
-| **Project** | MerQent |
-| **Domain** | Post-Merger Integration / Private Equity / Professional Services |
-| **Platform Type** | Specialized B2B Professional Marketplace |
-| **Primary Users** | Private Equity Firms, PMI Consultants, PMI Operators |
-| **Primary Focus** | Consultant Discovery, PMI Expertise, Project-Based Matching, Explainable AI, Verification, Professional Collaboration |
-| **Initial Client** | Web |
-| **Future Client** | Mobile |
-| **Development Approach** | Phased, test-driven, architecture-first |
-| **Current Stage** | Product Definition Complete / Repository Initialization |
-
----
-
-## 29. Long-Term Vision
-
-MerQent aims to evolve from a specialized consultant marketplace into a broader PMI execution ecosystem.
-
-```text
-                 MERQENT
-                    │
-        ┌───────────┼───────────┐
-        │           │           │
-        ▼           ▼           ▼
-   Discover      Match       Verify
-        │           │           │
-        └───────────┼───────────┘
-                    │
-                    ▼
-                 Connect
-                    │
-                    ▼
-               Communicate
-                    │
-                    ▼
-                Schedule
-                    │
-                    ▼
-              Collaborate
-                    │
-                    ▼
-            Execute PMI Work
-```
-
-The ultimate objective is to make specialized PMI expertise easier to discover, evaluate, engage, and collaborate with through a trusted technology platform.
-
----
-
-## 30. Final Note
-
-MerQent is being built with a simple principle:
-
-> **Specialized expertise deserves specialized infrastructure.**
-
-The platform combines domain-specific professional data, structured discovery, intelligent matching, explainable AI, verification, and collaboration into a single ecosystem focused on Post-Merger Integration.
-
-The project begins with a strong product definition and will now progress through a disciplined architecture and engineering process.
-
----
-
-## MerQent
-
-**Specialized PMI Expertise. Intelligent Matching. Trusted Connections.**

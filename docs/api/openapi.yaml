@@ -1,0 +1,189 @@
+openapi: 3.0.3
+info:
+  title: MerQent Core API
+  description: Specialized B2B marketplace connecting Private Equity firms with Post-Merger Integration (PMI) operators.
+  version: 1.0.0
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Local Development Environment
+  - url: https://api.merqent.com/api/v1
+    description: Production Environment
+
+paths:
+  /auth/register:
+    post:
+      summary: Register new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserDto'
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/login:
+    post:
+      summary: Authenticate credentials
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUserDto'
+      responses:
+        '200':
+          description: Logged in successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /projects:
+    get:
+      summary: List firm projects
+      tags: [Projects]
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Paginated project collection
+    post:
+      summary: Create PMI project
+      tags: [Projects]
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectDto'
+      responses:
+        '201':
+          description: Project created successfully
+
+  /search/consultants:
+    get:
+      summary: Hybrid faceted and semantic consultant search
+      tags: [Search]
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: string
+        - name: erpIds
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: availability
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated ranked consultant candidates
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+
+  schemas:
+    RegisterUserDto:
+      type: object
+      required: [email, password, fullName, role]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 12
+        fullName:
+          type: string
+        role:
+          type: string
+          enum: [PE_FIRM_ADMIN, CONSULTANT_OPERATOR]
+
+    LoginUserDto:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    CreateProjectDto:
+      type: object
+      required: [title, confidentialNameMasked, description, industryTermId, dealTypeTermId, targetStartDate]
+      properties:
+        title:
+          type: string
+        confidentialNameMasked:
+          type: string
+        description:
+          type: string
+        industryTermId:
+          type: string
+          format: uuid
+        dealTypeTermId:
+          type: string
+          format: uuid
+        targetStartDate:
+          type: string
+          format: date
+
+    ProblemDetails:
+      type: object
+      required: [type, title, status, code, detail, traceId, timestamp]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+        detail:
+          type: string
+        instance:
+          type: string
+        traceId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    ValidationError:
+      description: Input validation failure
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'

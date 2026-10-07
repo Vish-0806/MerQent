@@ -1,0 +1,608 @@
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector"), pg_trgm, uuid_ossp(map: "uuid-ossp")]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+enum UserRole {
+  PE_FIRM_ADMIN
+  PE_FIRM_MEMBER
+  CONSULTANT_OPERATOR
+  VERIFICATION_REVIEWER
+  PLATFORM_ADMIN
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum FirmAumTier {
+  UNDER_500M
+  TIER_500M_TO_2B
+  TIER_2B_TO_10B
+  OVER_10B
+}
+
+enum PrimaryRoleType {
+  STRATEGIC_CONSULTANT
+  HANDS_ON_OPERATOR
+  HYBRID
+}
+
+enum AvailabilityStatus {
+  IMMEDIATELY_AVAILABLE
+  AVAILABLE_WITHIN_30_DAYS
+  BOOKED
+}
+
+enum VerificationTier {
+  TIER_0_UNVERIFIED
+  TIER_1_EMAIL_VERIFIED
+  TIER_2_CREDENTIAL_VERIFIED
+  TIER_3_REFERENCE_VERIFIED
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  FULFILLED
+  CLOSED
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELED
+  EXPIRED
+}
+
+enum MeetingStatus {
+  PROPOSED
+  CONFIRMED
+  RESCHEDULED
+  CANCELED
+  COMPLETED
+}
+
+enum TaxonomyCategory {
+  ERP_SYSTEM
+  ACCOUNTING_SYSTEM
+  DEAL_TYPE
+  INTEGRATION_DISCIPLINE
+  INDUSTRY
+  PMI_TASK
+}
+
+enum VerificationRequestStatus {
+  PENDING_REVIEW
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  INFO_REQUESTED
+}
+
+enum FileScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+}
+
+model User {
+  id              String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email           String     @unique @db.VarChar(255)
+  passwordHash    String     @map("password_hash") @db.VarChar(255)
+  fullName        String     @map("full_name") @db.VarChar(255)
+  avatarUrl       String?    @map("avatar_url") @db.VarChar(1024)
+  role            UserRole   @default(CONSULTANT_OPERATOR)
+  status          UserStatus @default(PENDING_VERIFICATION)
+  emailVerifiedAt DateTime?  @map("email_verified_at")
+  mfaEnabled      Boolean    @default(false) @map("mfa_enabled")
+  mfaSecret       String?    @map("mfa_secret") @db.VarChar(255)
+  lastLoginAt     DateTime?  @map("last_login_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  firmMember        FirmMember?
+  consultantProfile ConsultantProfile?
+  refreshTokens     RefreshToken[]
+  sentMessages      Message[]
+  notifications     Notification[]
+  preferences       NotificationPreference[]
+  auditLogs         AuditLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  tokenHash  String   @map("token_hash") @db.VarChar(255)
+  deviceInfo String?  @map("device_info") @db.VarChar(255)
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  isRevoked  Boolean  @default(false) @map("is_revoked")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRevoked])
+  @@map("refresh_tokens")
+}
+
+model Firm {
+  id                  String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  legalName           String      @map("legal_name") @db.VarChar(255)
+  displayName         String      @map("display_name") @db.VarChar(255)
+  websiteUrl          String?     @map("website_url") @db.VarChar(512)
+  aumTier             FirmAumTier @default(UNDER_500M) @map("aum_tier")
+  headquartersCountry String      @map("headquarters_country") @db.VarChar(100)
+  headquartersCity    String?     @map("headquarters_city") @db.VarChar(100)
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+
+  members     FirmMember[]
+  projects    Project[]
+  shortlists  Shortlist[]
+  connections Connection[]
+
+  @@map("firms")
+}
+
+model FirmMember {
+  id       String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  firmId   String   @map("firm_id") @db.Uuid
+  userId   String   @unique @map("user_id") @db.Uuid
+  role     UserRole @default(PE_FIRM_MEMBER)
+  jobTitle String?  @map("job_title") @db.VarChar(150)
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  firm Firm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([firmId])
+  @@map("firm_members")
+}
+
+model ConsultantProfile {
+  id                     String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId                 String             @unique @map("user_id") @db.Uuid
+  headline               String             @db.VarChar(150)
+  bio                    String             @db.Text
+  primaryRoleType        PrimaryRoleType    @default(STRATEGIC_CONSULTANT) @map("primary_role_type")
+  yearsPmiExperience     Int                @map("years_pmi_experience")
+  availabilityStatus     AvailabilityStatus @default(IMMEDIATELY_AVAILABLE) @map("availability_status")
+  availableHoursPerWeek  Int                @default(40) @map("available_hours_per_week")
+  geographyCountry       String             @map("geography_country") @db.VarChar(100)
+  willingToTravelPercent Int                @default(25) @map("willing_to_travel_percent")
+  verificationTier       VerificationTier   @default(TIER_0_UNVERIFIED) @map("verification_tier")
+  isPublished            Boolean            @default(false) @map("is_published")
+  embedding              Unsupported("vector(1536)")?
+  createdAt              DateTime           @default(now()) @map("created_at")
+  updatedAt              DateTime           @updatedAt @map("updated_at")
+
+  user                 User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experiences          ConsultantExperience[]
+  certifications       ConsultantCertification[]
+  references           ConsultantReference[]
+  taxonomyTags         ConsultantTaxonomy[]
+  verificationRequests VerificationRequest[]
+  shortlistItems       ShortlistItem[]
+  connections          Connection[]
+  projectMatches       ProjectMatch[]
+
+  @@index([availabilityStatus, isPublished])
+  @@index([verificationTier])
+  @@map("consultant_profiles")
+}
+
+model ConsultantExperience {
+  id                  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  consultantProfileId String    @map("consultant_profile_id") @db.Uuid
+  roleTitle           String    @map("role_title") @db.VarChar(150)
+  dealContextMasked   String    @map("deal_context_masked") @db.VarChar(255)
+  startDate           DateTime  @map("start_date") @db.Date
+  endDate             DateTime? @map("end_date") @db.Date
+  description         String    @db.Text
+  achievements        String[]  @map("achievements")
+  isVerified          Boolean   @default(false) @map("is_verified")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  consultantProfile ConsultantProfile @relation(fields: [consultantProfileId], references: [id], onDelete: Cascade)
+
+  @@index([consultantProfileId])
+  @@map("consultant_experiences")
+}
+
+model ConsultantCertification {
+  id                  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  consultantProfileId String    @map("consultant_profile_id") @db.Uuid
+  certificationName   String    @map("certification_name") @db.VarChar(255)
+  issuingOrganization String    @map("issuing_organization") @db.VarChar(255)
+  issueDate           DateTime  @map("issue_date") @db.Date
+  expirationDate      DateTime? @map("expiration_date") @db.Date
+  credentialId        String?   @map("credential_id") @db.VarChar(255)
+  isVerified          Boolean   @default(false) @map("is_verified")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  consultantProfile ConsultantProfile @relation(fields: [consultantProfileId], references: [id], onDelete: Cascade)
+
+  @@index([consultantProfileId])
+  @@map("consultant_certifications")
+}
+
+model ConsultantReference {
+  id                   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  consultantProfileId  String    @map("consultant_profile_id") @db.Uuid
+  referrerName         String    @map("referrer_name") @db.VarChar(255)
+  referrerTitle        String    @map("referrer_title") @db.VarChar(150)
+  referrerOrganization String    @map("referrer_organization") @db.VarChar(255)
+  referrerEmail        String    @map("referrer_email") @db.VarChar(255)
+  relationship         String    @db.VarChar(255)
+  feedbackText         String?   @map("feedback_text") @db.Text
+  verifiedAt           DateTime? @map("verified_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  consultantProfile ConsultantProfile @relation(fields: [consultantProfileId], references: [id], onDelete: Cascade)
+
+  @@index([consultantProfileId])
+  @@map("consultant_references")
+}
+
+model TaxonomyTerm {
+  id           String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  category     TaxonomyCategory
+  code         String           @unique @db.VarChar(100)
+  name         String           @db.VarChar(255)
+  description  String?          @db.Text
+  parentTermId String?          @map("parent_term_id") @db.Uuid
+  isActive     Boolean          @default(true) @map("is_active")
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  parentTerm     TaxonomyTerm?        @relation("TaxonomyHierarchy", fields: [parentTermId], references: [id])
+  childTerms     TaxonomyTerm[]       @relation("TaxonomyHierarchy")
+  consultantTags ConsultantTaxonomy[]
+  projectTags    ProjectTaxonomy[]
+
+  @@index([category, isActive])
+  @@map("taxonomy_terms")
+}
+
+model ConsultantTaxonomy {
+  id                  String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  consultantProfileId String   @map("consultant_profile_id") @db.Uuid
+  taxonomyTermId      String   @map("taxonomy_term_id") @db.Uuid
+  yearsExperience     Int?     @map("years_experience")
+  isPrimary           Boolean  @default(false) @map("is_primary")
+
+  consultantProfile ConsultantProfile @relation(fields: [consultantProfileId], references: [id], onDelete: Cascade)
+  taxonomyTerm      TaxonomyTerm      @relation(fields: [taxonomyTermId], references: [id], onDelete: Cascade)
+
+  @@unique([consultantProfileId, taxonomyTermId])
+  @@map("consultant_taxonomies")
+}
+
+model Project {
+  id                      String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  firmId                  String        @map("firm_id") @db.Uuid
+  title                   String        @db.VarChar(255)
+  confidentialNameMasked  String        @map("confidential_name_masked") @db.VarChar(255)
+  description             String        @db.Text
+  status                  ProjectStatus @default(DRAFT)
+  targetCloseDate         DateTime?     @map("target_close_date") @db.Date
+  targetStartDate         DateTime      @map("target_start_date") @db.Date
+  estimatedDurationMonths Int           @default(6) @map("estimated_duration_months")
+  requiredTravelPercent   Int           @default(25) @map("required_travel_percent")
+  geographyCountry        String        @map("geography_country") @db.VarChar(100)
+  embedding               Unsupported("vector(1536)")?
+  createdAt               DateTime      @default(now()) @map("created_at")
+  updatedAt               DateTime      @updatedAt @map("updated_at")
+
+  firm           Firm                 @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  requirements   ProjectRequirement[]
+  taxonomyTags   ProjectTaxonomy[]
+  projectMatches ProjectMatch[]
+  shortlist      Shortlist?
+  connections    Connection[]
+
+  @@index([firmId, status])
+  @@index([status])
+  @@map("projects")
+}
+
+model ProjectRequirement {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  category    String   @db.VarChar(100)
+  description String   @db.Text
+  isMandatory Boolean  @default(true) @map("is_mandatory")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_requirements")
+}
+
+model ProjectTaxonomy {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  taxonomyTermId String   @map("taxonomy_term_id") @db.Uuid
+  isRequired     Boolean  @default(true) @map("is_required")
+
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  taxonomyTerm TaxonomyTerm @relation(fields: [taxonomyTermId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, taxonomyTermId])
+  @@map("project_taxonomies")
+}
+
+model ProjectMatch {
+  id                  String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId           String   @map("project_id") @db.Uuid
+  consultantProfileId String   @map("consultant_profile_id") @db.Uuid
+  matchScore          Decimal  @map("match_score") @db.Decimal(5, 2)
+  confidenceScore     Decimal  @map("confidence_score") @db.Decimal(5, 2)
+  isLowConfidence     Boolean  @default(false) @map("is_low_confidence")
+  modelProvider       String   @map("model_provider") @db.VarChar(50)
+  modelVersion        String   @map("model_version") @db.VarChar(50)
+  calculatedAt        DateTime @default(now()) @map("calculated_at")
+
+  project           Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  consultantProfile ConsultantProfile @relation(fields: [consultantProfileId], references: [id], onDelete: Cascade)
+  explanations      MatchExplanation[]
+
+  @@unique([projectId, consultantProfileId])
+  @@index([projectId, matchScore])
+  @@map("project_matches")
+}
+
+model MatchExplanation {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectMatchId String   @map("project_match_id") @db.Uuid
+  category       String   @db.VarChar(100)
+  summaryText    String   @map("summary_text") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  projectMatch ProjectMatch    @relation(fields: [projectMatchId], references: [id], onDelete: Cascade)
+  evidence     MatchEvidence[]
+
+  @@index([projectMatchId])
+  @@map("match_explanations")
+}
+
+model MatchEvidence {
+  id                 String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  matchExplanationId String   @map("match_explanation_id") @db.Uuid
+  sourceEntityType   String   @map("source_entity_type") @db.VarChar(100)
+  sourceEntityId     String   @map("source_entity_id") @db.Uuid
+  excerpt            String   @db.Text
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  matchExplanation MatchExplanation @relation(fields: [matchExplanationId], references: [id], onDelete: Cascade)
+
+  @@index([matchExplanationId])
+  @@map("match_evidences")
+}
+
+model Shortlist {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  firmId    String   @map("firm_id") @db.Uuid
+  projectId String   @unique @map("project_id") @db.Uuid
+  name      String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  firm    Firm            @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  project Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items   ShortlistItem[]
+
+  @@index([firmId])
+  @@map("shortlists")
+}
+
+model ShortlistItem {
+  id                  String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  shortlistId         String   @map("shortlist_id") @db.Uuid
+  consultantProfileId String   @map("consultant_profile_id") @db.Uuid
+  internalRating      Int?     @map("internal_rating")
+  privateNotes        String?  @map("private_notes") @db.Text
+  addedAt             DateTime @default(now()) @map("added_at")
+
+  shortlist         Shortlist         @relation(fields: [shortlistId], references: [id], onDelete: Cascade)
+  consultantProfile ConsultantProfile @relation(fields: [consultantProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([shortlistId, consultantProfileId])
+  @@map("shortlist_items")
+}
+
+model Connection {
+  id                  String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  firmId              String           @map("firm_id") @db.Uuid
+  consultantProfileId String           @map("consultant_profile_id") @db.Uuid
+  projectId           String           @map("project_id") @db.Uuid
+  status              ConnectionStatus @default(PENDING)
+  introductoryNote    String?          @map("introductory_note") @db.Text
+  respondedAt         DateTime?        @map("responded_at")
+  expiresAt           DateTime         @map("expires_at")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+
+  firm              Firm              @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  consultantProfile ConsultantProfile @relation(fields: [consultantProfileId], references: [id], onDelete: Cascade)
+  project           Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  conversation      Conversation?
+  meetings          Meeting[]
+
+  @@unique([firmId, consultantProfileId, projectId])
+  @@index([status])
+  @@map("connections")
+}
+
+model Conversation {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  connectionId  String    @unique @map("connection_id") @db.Uuid
+  lastMessageAt DateTime? @map("last_message_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  messages   Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  senderUserId   String    @map("sender_user_id") @db.Uuid
+  content        String    @db.Text
+  isRead         Boolean   @default(false) @map("is_read")
+  readAt         DateTime? @map("read_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  conversation Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderUser   User                @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
+  attachments  MessageAttachment[]
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model MessageAttachment {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  messageId        String   @map("message_id") @db.Uuid
+  fileRecordId     String   @map("file_record_id") @db.Uuid
+  originalFileName String   @map("original_file_name") @db.VarChar(255)
+  fileSizeBytes    Int      @map("file_size_bytes")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  message    Message    @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  fileRecord FileRecord @relation(fields: [fileRecordId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("message_attachments")
+}
+
+model Meeting {
+  id              String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  connectionId    String        @map("connection_id") @db.Uuid
+  title           String        @db.VarChar(255)
+  agenda          String?       @db.Text
+  startTime       DateTime      @map("start_time") @db.Timestamptz
+  endTime         DateTime      @map("end_time") @db.Timestamptz
+  durationMinutes Int           @map("duration_minutes")
+  timezone        String        @db.VarChar(100)
+  status          MeetingStatus @default(PROPOSED)
+  meetingUrl      String?       @map("meeting_url") @db.VarChar(1024)
+  icsUid          String        @unique @map("ics_uid") @db.VarChar(255)
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId, startTime])
+  @@map("meetings")
+}
+
+model VerificationRequest {
+  id                  String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  consultantProfileId String                    @map("consultant_profile_id") @db.Uuid
+  targetTier          VerificationTier          @map("target_tier")
+  status              VerificationRequestStatus @default(PENDING_REVIEW)
+  reviewerNotes       String?                   @map("reviewer_notes") @db.Text
+  submittedAt         DateTime                  @default(now()) @map("submitted_at")
+  decidedAt           DateTime?                 @map("decided_at")
+
+  consultantProfile ConsultantProfile      @relation(fields: [consultantProfileId], references: [id], onDelete: Cascade)
+  evidence          VerificationEvidence[]
+
+  @@index([status])
+  @@map("verification_requests")
+}
+
+model VerificationEvidence {
+  id                    String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  verificationRequestId String   @map("verification_request_id") @db.Uuid
+  fileRecordId          String   @map("file_record_id") @db.Uuid
+  evidenceType          String   @map("evidence_type") @db.VarChar(100)
+  uploadedAt            DateTime @default(now()) @map("uploaded_at")
+
+  verificationRequest VerificationRequest @relation(fields: [verificationRequestId], references: [id], onDelete: Cascade)
+  fileRecord          FileRecord          @relation(fields: [fileRecordId], references: [id], onDelete: Cascade)
+
+  @@map("verification_evidences")
+}
+
+model FileRecord {
+  id               String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  storageKey       String         @unique @map("storage_key") @db.VarChar(255)
+  originalFileName String         @map("original_file_name") @db.VarChar(255)
+  mimeType         String         @map("mime_type") @db.VarChar(100)
+  fileSizeBytes    Int            @map("file_size_bytes")
+  checksumSha256   String         @map("checksum_sha256") @db.VarChar(64)
+  scanStatus       FileScanStatus @default(PENDING) @map("scan_status")
+  ownerUserId      String         @map("owner_user_id") @db.Uuid
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  attachments          MessageAttachment[]
+  verificationEvidence VerificationEvidence[]
+
+  @@index([ownerUserId])
+  @@map("file_records")
+}
+
+model Notification {
+  id        String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  type      String    @db.VarChar(100)
+  title     String    @db.VarChar(255)
+  body      String    @db.Text
+  metadata  Json?     @db.JsonB
+  isRead    Boolean   @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id           String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String  @map("user_id") @db.Uuid
+  eventType    String  @map("event_type") @db.VarChar(100)
+  inAppEnabled Boolean @default(true) @map("in_app_enabled")
+  emailEnabled Boolean @default(true) @map("email_enabled")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventType])
+  @@map("notification_preferences")
+}
+
+model AuditLog {
+  id                 String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  actorUserId        String?  @map("actor_user_id") @db.Uuid
+  actorIpAddress     String?  @map("actor_ip_address") @db.VarChar(45)
+  action             String   @db.VarChar(100)
+  targetResourceType String   @map("target_resource_type") @db.VarChar(100)
+  targetResourceId   String?  @map("target_resource_id") @db.VarChar(100)
+  payloadDiff        Json?    @map("payload_diff") @db.JsonB
+  timestamp          DateTime @default(now()) @db.Timestamptz
+
+  actorUser User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([targetResourceType, targetResourceId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
