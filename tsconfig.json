@@ -9,5 +9,14 @@
       "@merqent/ui": ["packages/ui/src/index.ts"]
     }
   },
-  "exclude": ["node_modules", "dist", ".next"]
+  "files": [],
+  "references": [
+    { "path": "packages/shared-types" },
+    { "path": "packages/validation" },
+    { "path": "packages/config" },
+    { "path": "packages/ui" },
+    { "path": "apps/api" },
+    { "path": "apps/web" },
+    { "path": "prisma" }
+  ]
 }
