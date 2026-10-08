@@ -43,9 +43,9 @@ Generic freelance marketplaces treat professional services as broad, undifferent
 | Attribute         | Canonical Value                                              |
 | ----------------- | ------------------------------------------------------------ |
 | **Current Stage** | **Phase 2 — Production Foundation**                          |
-| **Active Task**   | **Task 2.3 — Next.js Web Application Foundation (COMPLETE)** |
-| **Previous Task** | **Task 2.2 — Development Environment & Config (APPROVED)**   |
-| **Next Task**     | **Task 2.4 — NestJS API Foundation**                         |
+| **Active Task**   | **Task 2.4 — NestJS API Foundation (COMPLETE)**              |
+| **Previous Task** | **Task 2.3 — Next.js Web Application Foundation (APPROVED)** |
+| **Next Task**     | **Task 2.5 — Database Infrastructure**                       |
 
 ```mermaid
 graph LR
@@ -319,8 +319,9 @@ MerQent development follows strict engineering phase discipline:
 PHASE 1 (Architecture):              COMPLETE (AUDIT PASSED)
 PHASE 2.1 (Workspace Init):          COMPLETE (APPROVED)
 PHASE 2.2 (Dev Env & Config):        COMPLETE (APPROVED)
-PHASE 2.3 (Next.js Web Foundation):  COMPLETE (ALL CHECKS PASSED)
+PHASE 2.3 (Next.js Web Foundation):  COMPLETE (APPROVED)
+PHASE 2.4 (NestJS API Foundation):   COMPLETE (ALL CHECKS PASSED)
 STATUS:                              READY FOR REVIEW
-NEXT TASK:                           Task 2.4 — NestJS API Foundation
+NEXT TASK:                           Task 2.5 — Database Infrastructure
 ====================================================================
 ```

@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import configuration from '../config/configuration';
 import { AppController } from './app.controller';
+import { CorrelationIdMiddleware } from '../common/middleware/correlation-id.middleware';
 
 // Infrastructure Modules
 import { DatabaseModule } from '../infrastructure/database/database.module';
@@ -12,7 +13,7 @@ import { EmailModule } from '../infrastructure/email/email.module';
 import { AiModule } from '../infrastructure/ai/ai.module';
 import { SearchInfrastructureModule } from '../infrastructure/search/search.module';
 
-// Domain Modules
+// Domain Module Shells (Architecture-Ready)
 import { AuthModule } from '../modules/auth/auth.module';
 import { UsersModule } from '../modules/users/users.module';
 import { OrganizationsModule } from '../modules/organizations/organizations.module';
@@ -66,4 +67,8 @@ import { AuditModule } from '../modules/audit/audit.module';
   ],
   controllers: [AppController],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

@@ -1,40 +1,55 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { NestFactory, Reflector } from '@nestjs/core';
+import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { json, urlencoded } from 'express';
 import { AppModule } from './app/app.module';
 import { AppLogger } from './infrastructure/observability/logger.service';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
 
+  // Enable graceful shutdown hooks
+  app.enableShutdownHooks();
+
   const logger = app.get(AppLogger);
   app.useLogger(logger);
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('port', 4000);
-  const corsOrigin = configService.get<string>('cors.origin', 'http://localhost:3000');
+  const corsOrigins = configService.get<string | string[]>('cors.origins', [
+    'http://localhost:3000',
+  ]);
+
+  // Security: Payload body size limits
+  app.use(json({ limit: '10mb' }));
+  app.use(urlencoded({ extended: true, limit: '10mb' }));
 
   // CORS configuration
   app.enableCors({
-    origin: corsOrigin,
+    origin: corsOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-correlation-id', 'Accept'],
+    exposedHeaders: ['x-correlation-id'],
   });
 
-  // Global prefix
+  // Global API route prefix
   app.setGlobalPrefix('api/v1');
 
-  // Global filters and interceptors
+  // Global filters
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new TransformInterceptor());
 
-  // Global validation pipe
+  // Global interceptors (Logging with correlation ID + standard response envelope)
+  const reflector = app.get(Reflector);
+  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor(reflector));
+
+  // Global validation pipe with structured error formatting
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -43,6 +58,23 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
+      exceptionFactory: (validationErrors) => {
+        const formatErrors = (errors: typeof validationErrors): string[] => {
+          const messages: string[] = [];
+          for (const err of errors) {
+            if (err.constraints) {
+              messages.push(...Object.values(err.constraints));
+            }
+            if (err.children && err.children.length > 0) {
+              messages.push(...formatErrors(err.children));
+            }
+          }
+          return messages;
+        };
+
+        const errorMessages = formatErrors(validationErrors);
+        return new BadRequestException(errorMessages);
+      },
     }),
   );
 
@@ -50,14 +82,41 @@ async function bootstrap() {
   const swaggerConfig = new DocumentBuilder()
     .setTitle('MerQent API')
     .setDescription(
-      'Specialized B2B marketplace and collaboration platform connecting Private Equity firms with Post-Merger Integration (PMI) operators.',
+      'Specialized enterprise B2B marketplace and collaboration platform connecting Private Equity firms with Post-Merger Integration (PMI) operators.',
     )
     .setVersion('1.0.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Enter your 15-minute access token',
+        in: 'header',
+      },
+      'bearer-jwt',
+    )
+    .addTag('Health', 'API runtime health probes and database connectivity verification')
+    .addTag('Auth', 'Dual-token authentication and session lifecycle')
+    .addTag('Users', 'User accounts, permissions, and roles')
+    .addTag('Organizations', 'PE firms, portfolio companies, and advisory firms')
+    .addTag('Consultants', 'Vetted PMI operator profiles and verified deal history')
+    .addTag('Projects', 'M&A integration mandates and confidential project scoping')
+    .addTag('Matching', 'Grounded hybrid AI recommendations and evidence scoring')
+    .addTag('Messaging', 'Real-time relationship-gated messaging and document attachments')
+    .addTag('Scheduling', 'Timezone-aware calendar coordination and ICS generation')
+    .addTag('Notifications', 'System alerts and engagement updates')
+    .addTag('Taxonomies', 'Governed ERPs, deal archetypes, and PMI workstreams')
+    .addTag('Admin', 'Verification queues, governance, and audit trails')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+    },
+  });
 
   await app.listen(port);
   logger.log(`🚀 MerQent API server running on: http://localhost:${port}/api/v1`);

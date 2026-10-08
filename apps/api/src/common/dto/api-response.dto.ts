@@ -1,0 +1,77 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class ErrorResponseDto {
+  @ApiProperty({ example: 400, description: 'HTTP status code' })
+  statusCode!: number;
+
+  @ApiProperty({ example: '2026-10-08T16:20:00.000Z', description: 'ISO timestamp of occurrence' })
+  timestamp!: string;
+
+  @ApiProperty({ example: '/api/v1/projects', description: 'Request URI path' })
+  path!: string;
+
+  @ApiProperty({
+    example: 'b5f2cfcf-9c6f-40e1-b4f0-4560a8a72b01',
+    description: 'Unique request correlation ID',
+  })
+  correlationId!: string;
+
+  @ApiProperty({
+    example: 'Validation failed',
+    description: 'Human-readable error description or array of constraint violations',
+  })
+  message!: string | string[];
+
+  @ApiProperty({ example: 'Bad Request', description: 'Error classification category' })
+  error!: string;
+}
+
+export class DatabaseDependencyStatusDto {
+  @ApiProperty({ enum: ['connected', 'disconnected'], example: 'connected' })
+  status!: 'connected' | 'disconnected';
+
+  @ApiPropertyOptional({ example: 3, description: 'Query round-trip latency in milliseconds' })
+  latencyMs?: number;
+}
+
+export class DependencyStatusMapDto {
+  @ApiProperty({ type: DatabaseDependencyStatusDto })
+  database!: DatabaseDependencyStatusDto;
+}
+
+export class HealthResponseDto {
+  @ApiProperty({ enum: ['ok', 'degraded'], example: 'ok' })
+  status!: 'ok' | 'degraded';
+
+  @ApiProperty({ example: 'MerQent API' })
+  service!: string;
+
+  @ApiProperty({ example: '1.0.0' })
+  version!: string;
+
+  @ApiProperty({ example: 'development' })
+  environment!: string;
+
+  @ApiProperty({ example: '2026-10-08T16:20:00.000Z' })
+  timestamp!: string;
+
+  @ApiProperty({ example: 42.1, description: 'Process uptime in seconds' })
+  uptime!: number;
+
+  @ApiProperty({ type: DependencyStatusMapDto })
+  dependencies!: DependencyStatusMapDto;
+}
+
+export class PaginationMetaDto {
+  @ApiProperty({ example: 100, description: 'Total number of items' })
+  total!: number;
+
+  @ApiProperty({ example: 1, description: 'Current page number' })
+  page!: number;
+
+  @ApiProperty({ example: 20, description: 'Items per page' })
+  limit!: number;
+
+  @ApiProperty({ example: 5, description: 'Total number of pages' })
+  totalPages!: number;
+}
