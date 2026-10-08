@@ -4,16 +4,16 @@ services:
     container_name: merqent_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: merqent_user
-      POSTGRES_PASSWORD: merqent_dev_password
-      POSTGRES_DB: merqent_db
+      POSTGRES_USER: ${POSTGRES_USER:-merqent_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-merqent_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-merqent_db}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U merqent_user -d merqent_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-merqent_user} -d ${POSTGRES_DB:-merqent_db}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -23,7 +23,7 @@ services:
     container_name: merqent_redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -38,13 +38,18 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_ACCESS_KEY:-minioadmin}
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${STORAGE_PORT:-9000}:9000"
+      - "${STORAGE_CONSOLE_PORT:-9001}:9001"
     volumes:
       - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

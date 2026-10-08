@@ -43,9 +43,9 @@ Generic freelance marketplaces treat professional services as broad, undifferent
 | Attribute         | Canonical Value                                                   |
 | ----------------- | ----------------------------------------------------------------- |
 | **Current Stage** | **Phase 2 — Production Foundation**                               |
-| **Active Task**   | **Task 2.1 — Repository & Workspace Initialization (COMPLETE)**   |
-| **Previous Gate** | **Phase 1.26 Final Architecture Audit (PASSED)**                  |
-| **Next Task**     | **Task 2.2 — Development Environment & Configuration Foundation** |
+| **Active Task**   | **Task 2.2 — Development Environment & Configuration (COMPLETE)** |
+| **Previous Task** | **Task 2.1 — Repository & Workspace Initialization (APPROVED)**   |
+| **Next Task**     | **Task 2.3 — Next.js Web Application Foundation**                 |
 
 ```mermaid
 graph LR
@@ -292,6 +292,7 @@ MerQent uses **Turborepo** to orchestrate tasks across the monorepo. Every comma
 | `pnpm test`         | Execute test runner (Jest) across the workspace                     | `@merqent/api` + test suites      |
 | `pnpm format:check` | Check code formatting adherence against Prettier                    | Root and packages                 |
 | `pnpm format`       | Reformat codebase adhering to `.prettierrc` rules                   | Root and packages                 |
+| `pnpm env:validate` | Centrally validate `.env` against strict Zod schema                 | Root (`scripts/validate-env.js`)  |
 | `pnpm clean`        | Cross-platform cleanup of `.turbo`, `dist`, `.next`, and `coverage` | All workspaces                    |
 | `pnpm db:generate`  | Generate Prisma Client from `prisma/schema.prisma`                  | `@merqent/api`                    |
 | `pnpm db:migrate`   | Apply database migrations to local PostgreSQL                       | `@merqent/api`                    |
@@ -316,9 +317,10 @@ MerQent development follows strict engineering phase discipline:
 ```text
 ====================================================================
 PHASE 1 (Architecture):              COMPLETE (AUDIT PASSED)
-PHASE 2.1 (Workspace Init):          COMPLETE (ALL CHECKS PASSED)
+PHASE 2.1 (Workspace Init):          COMPLETE (APPROVED)
+PHASE 2.2 (Dev Env & Config):        COMPLETE (ALL CHECKS PASSED)
 STATUS:                              READY FOR REVIEW
-NEXT TASK:                           Task 2.2 — Development Environment
-                                     & Configuration Foundation
+NEXT TASK:                           Task 2.3 — Next.js Web Application
+                                     Foundation
 ====================================================================
 ```
