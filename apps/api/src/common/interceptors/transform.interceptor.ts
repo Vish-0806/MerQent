@@ -1,15 +1,10 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export interface ApiResponse<T> {
   data: T;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 @Injectable()

@@ -1,5 +1,12 @@
 import { Module } from '@nestjs/common';
-import { AI_PROVIDER_TOKEN, IAiProvider, EmbeddingRequest, EmbeddingResponse, CompletionRequest, CompletionResponse } from './ai-provider.interface';
+import {
+  AI_PROVIDER_TOKEN,
+  IAiProvider,
+  EmbeddingRequest,
+  EmbeddingResponse,
+  CompletionRequest,
+  CompletionResponse,
+} from './ai-provider.interface';
 
 // Default mock/sandbox provider for Phase 1 architecture verification
 class SandboxAiProvider implements IAiProvider {

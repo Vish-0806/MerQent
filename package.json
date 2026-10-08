@@ -8,18 +8,17 @@
   "packageManager": "pnpm@9.5.0",
   "scripts": {
     "build": "turbo run build",
+    "clean": "turbo run clean && node -e \"const fs = require('fs'); ['.turbo', 'coverage'].forEach(d => fs.existsSync(d) && fs.rmSync(d, { recursive: true, force: true }))\"",
     "dev": "turbo run dev --parallel",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "test:unit": "turbo run test:unit",
-    "test:e2e": "turbo run test:e2e",
     "typecheck": "turbo run typecheck",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "db:generate": "pnpm --filter @merqent/api run prisma:generate",
     "db:migrate": "pnpm --filter @merqent/api run prisma:migrate",
     "db:seed": "pnpm --filter @merqent/api run prisma:seed",
-    "db:studio": "pnpm --filter @merqent/api run prisma:studio",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "db:studio": "pnpm --filter @merqent/api run prisma:studio"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",

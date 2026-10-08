@@ -32,30 +32,24 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   @SubscribeMessage('room:join')
-  handleJoinRoom(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string },
-  ) {
+  handleJoinRoom(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string }) {
     client.join(data.roomId);
     this.logger.log(`Client ${client.id} joined room ${data.roomId}`);
     return { event: 'room:joined', roomId: data.roomId };
   }
 
   @SubscribeMessage('room:leave')
-  handleLeaveRoom(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string },
-  ) {
+  handleLeaveRoom(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string }) {
     client.leave(data.roomId);
     this.logger.log(`Client ${client.id} left room ${data.roomId}`);
     return { event: 'room:left', roomId: data.roomId };
   }
 
-  emitToRoom(roomId: string, event: string, payload: any) {
+  emitToRoom(roomId: string, event: string, payload: unknown) {
     this.server.to(roomId).emit(event, payload);
   }
 
-  emitToUser(userId: string, event: string, payload: any) {
+  emitToUser(userId: string, event: string, payload: unknown) {
     this.server.to(`user:${userId}`).emit(event, payload);
   }
 }

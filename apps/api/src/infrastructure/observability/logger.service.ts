@@ -17,23 +17,23 @@ export class AppLogger implements NestLoggerService {
         : undefined,
   });
 
-  log(message: any, ...optionalParams: any[]) {
-    this.logger.info({ context: optionalParams }, message);
+  log(message: unknown, ...optionalParams: unknown[]) {
+    this.logger.info({ context: optionalParams }, String(message));
   }
 
-  error(message: any, ...optionalParams: any[]) {
-    this.logger.error({ context: optionalParams }, message);
+  error(message: unknown, ...optionalParams: unknown[]) {
+    this.logger.error({ context: optionalParams }, String(message));
   }
 
-  warn(message: any, ...optionalParams: any[]) {
-    this.logger.warn({ context: optionalParams }, message);
+  warn(message: unknown, ...optionalParams: unknown[]) {
+    this.logger.warn({ context: optionalParams }, String(message));
   }
 
-  debug?(message: any, ...optionalParams: any[]) {
-    this.logger.debug({ context: optionalParams }, message);
+  debug?(message: unknown, ...optionalParams: unknown[]) {
+    this.logger.debug({ context: optionalParams }, String(message));
   }
 
-  verbose?(message: any, ...optionalParams: any[]) {
-    this.logger.trace({ context: optionalParams }, message);
+  verbose?(message: unknown, ...optionalParams: unknown[]) {
+    this.logger.trace({ context: optionalParams }, String(message));
   }
 }

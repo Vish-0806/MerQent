@@ -37,4 +37,5 @@ export const MERQENT_THEME = {
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
-export type BadgeVariant = 'default' | 'success' | 'warning' | 'destructive' | 'outline' | 'verified';
+export type BadgeVariant =
+  'default' | 'success' | 'warning' | 'destructive' | 'outline' | 'verified';

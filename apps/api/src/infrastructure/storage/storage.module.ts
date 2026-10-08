@@ -1,5 +1,10 @@
 import { Module } from '@nestjs/common';
-import { STORAGE_SERVICE_TOKEN, IStorageService, PresignUploadRequest, PresignUploadResponse } from './storage.interface';
+import {
+  STORAGE_SERVICE_TOKEN,
+  IStorageService,
+  PresignUploadRequest,
+  PresignUploadResponse,
+} from './storage.interface';
 
 class SandboxStorageService implements IStorageService {
   async getPresignedUploadUrl(request: PresignUploadRequest): Promise<PresignUploadResponse> {

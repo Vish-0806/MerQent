@@ -2,10 +2,10 @@
 
 > **Specialized PMI Expertise. Intelligent Matching. Trusted Connections.**
 
-[![Phase](https://img.shields.io/badge/Phase-1%20Production%20Architecture%20Complete-green)]()
-[![Architecture Audit](https://img.shields.io/badge/Architecture%20Audit-PASS-brightgreen)]()
-[![Ready for Phase 2](https://img.shields.io/badge/Ready%20for%20Phase%202-YES-blue)]()
-[![License](https://img.shields.io/badge/License-MIT-green)]()
+[![Phase](https://img.shields.io/badge/Phase-1%20Production%20Architecture%20Complete-green)](<>)
+[![Architecture Audit](https://img.shields.io/badge/Architecture%20Audit-PASS-brightgreen)](<>)
+[![Ready for Phase 2](https://img.shields.io/badge/Ready%20for%20Phase%202-YES-blue)](<>)
+[![License](https://img.shields.io/badge/License-MIT-green)](<>)
 
 ---
 
@@ -14,6 +14,7 @@
 **MerQent** is an enterprise B2B professional marketplace engineered specifically to connect **Private Equity (PE) firms and portfolio operations teams** with **vetted Post-Merger Integration (PMI) consultants and seasoned operators**.
 
 Finding the right operator for a high-stakes integration engagement is notoriously challenging. A private equity sponsor frequently requires a professional with a hyper-specific combination of operational experience:
+
 - Manufacturing industry domain knowledge
 - SAP S/4HANA & ECC 6.0 financial ledger integration experience
 - Corporate carve-out execution under tight Transition Services Agreements (TSAs)
@@ -23,6 +24,7 @@ Finding the right operator for a high-stakes integration engagement is notorious
 Generic freelance marketplaces treat professional services as broad, undifferentiated categories ("finance", "strategy", "software development"). They lack the structural comprehension required for M&A integration work.
 
 **MerQent bridges this gap through:**
+
 1. **Governed PMI-Specific Taxonomies** (ERPs, Deal Archetypes, Integration Disciplines, Industries)
 2. **Multi-Tier Verified Expertise** (Identity, Credentials, Redacted Work History, Peer References)
 3. **Structured Project Scoping & Confidential Deal Masking**
@@ -38,28 +40,42 @@ Generic freelance marketplaces treat professional services as broad, undifferent
 
 ## 2. Project Status & Roadmap
 
-| Attribute | Canonical Value |
-|---|---|
-| **Current Stage** | **Phase 1 — Production Architecture Complete** |
-| **Development Status** | Architecture Ratified — Implementation Ready |
-| **Architecture Audit** | **PASS (100% Quality Bar Met)** |
-| **Next Phase** | **Phase 2 — Engineering Foundation & Application Scaffolding** |
+| Attribute         | Canonical Value                                                   |
+| ----------------- | ----------------------------------------------------------------- |
+| **Current Stage** | **Phase 2 — Production Foundation**                               |
+| **Active Task**   | **Task 2.1 — Repository & Workspace Initialization (COMPLETE)**   |
+| **Previous Gate** | **Phase 1.26 Final Architecture Audit (PASSED)**                  |
+| **Next Task**     | **Task 2.2 — Development Environment & Configuration Foundation** |
 
 ```mermaid
 graph LR
     P0[Phase 0: Product Definition] --> P05[Phase 0.5: Repo Init]
     P05 --> P1[Phase 1: Production Architecture]
-    P1 --> P2[Phase 2: Engineering Foundation]
+    P1 --> P2[Phase 2: Production Foundation]
     P2 --> P3[Phase 3: Core Implementation]
-    
+
     style P0 fill:#d4edda,stroke:#28a745
     style P05 fill:#d4edda,stroke:#28a745
-    style P1 fill:#cce5ff,stroke:#004085,stroke-width:3px
-    style P2 fill:#fff3cd,stroke:#856404
-    style P3 fill:#e2e3e5,stroke:#383d41
+    style P1 fill:#d4edda,stroke:#28a745
+    style P2 fill:#cce5ff,stroke:#004085,stroke-width:3px
+    style P3 fill:#fff3cd,stroke:#856404
 ```
 
-> **Note:** The platform architecture and design specifications are 100% complete and verified. Product feature implementation (authentication, profiles, matching, chat) has intentionally **not** begun and will be executed systematically in Phase 2 and subsequent phases.
+### Feature Implementation Status Matrix
+
+| Capability / Layer                 | Status              | Description                                                                       |
+| ---------------------------------- | ------------------- | --------------------------------------------------------------------------------- |
+| **Monorepo Architecture**          | **Implemented**     | pnpm workspace + Turborepo orchestration across 2 apps and 4 packages             |
+| **TypeScript Foundation**          | **Implemented**     | Strict TypeScript baseline (`tsconfig.base.json`, project references)             |
+| **Code Quality Tools**             | **Implemented**     | ESLint (`next/core-web-vitals` + `@typescript-eslint`), Prettier, EditorConfig    |
+| **Web Shell (`apps/web`)**         | **Implemented**     | Next.js 14 App Router application shell, Tailwind CSS, Radix UI baseline          |
+| **API Shell (`apps/api`)**         | **Implemented**     | NestJS 10 modular monolith shell, Swagger OpenAPI setup, AppModule smoke test     |
+| **Shared Packages**                | **Implemented**     | `@merqent/shared-types`, `@merqent/validation`, `@merqent/config`, `@merqent/ui`  |
+| **Prisma Schema & Seed**           | **Implemented**     | 28 entities, pgvector integration, initial migration, seed script                 |
+| **Domain Logic & Business Rules**  | _Architecture-Only_ | Ratified in Phase 1 specifications; implementation scheduled for subsequent tasks |
+| **AI Matching Engine**             | _Architecture-Only_ | Mathematical scoring and grounding ratified in Phase 1 (ADR-006)                  |
+| **Authentication & Authorization** | _Planned_           | Dual-token JWT + Argon2id planned for Phase 2 configuration & auth tasks          |
+| **Marketplace Business Features**  | _Planned_           | Profiles, projects, messaging, scheduling, shortlisting planned for Phase 3       |
 
 ---
 
@@ -67,22 +83,22 @@ graph LR
 
 Following a rigorous, evidence-based evaluation against eleven enterprise criteria, the production stack is formally ratified across 13 Architecture Decision Records:
 
-| Layer | Selected Production Technology | Architectural Justification | Reference ADR |
-|---|---|---|---|
-| **Web Frontend** | **Next.js 14+ (App Router)** / React 18+ / TypeScript / Tailwind CSS / Radix UI | Hybrid React Server Components (RSC) for fast SEO-rendered public previews; interactive client components for chat/scheduling; shared TypeScript types with backend. | [ADR-001](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-001-frontend.md) |
-| **Backend API** | **Node.js 20 LTS / NestJS 10+** (Strict TypeScript) | Enterprise Modular Monolith with Inversion of Control (IoC), Dependency Injection, clean domain boundaries, and automated OpenAPI 3.0 generation. | [ADR-002](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-002-backend.md) |
-| **Primary Database** | **PostgreSQL 16+** with `pgvector` & `pg_trgm` | Strict ACID transactional consistency; unified relational, JSONB document, and 1536d vector embedding storage in a single engine with zero ETL lag. | [ADR-003](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-003-database.md) |
-| **ORM / Migrations** | **Prisma ORM 5+** | Declarative schema as single source of truth; type-safe client generation; automated migration and seed engine. | [ADR-004](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-004-orm.md) |
-| **Authentication** | **Dual-Token JWT** (15m Access Token) + DB/Redis Stateful Refresh Token Rotation | XSS-immune browser cookies; native mobile Bearer header compatibility; immediate server-side session revocation. | [ADR-005](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-005-authentication.md) |
-| **AI Matching Engine** | **Hybrid Grounded AI Matching Engine** via Abstracted `IAiProvider` | Two-stage grounded pipeline: relational filtering + `pgvector` semantic retrieval + deterministic multi-factor scoring + LLM explainability. | [ADR-006](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-006-ai.md) |
-| **Search & Discovery** | **PostgreSQL native** (`pg_trgm` + `pgvector` HNSW) | Single-engine hybrid queries combining exact boolean taxonomy filters with sub-25ms cosine similarity ranking. | [ADR-007](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-007-search.md) |
-| **Real-Time Push** | **WebSockets / Socket.IO** with Redis Cluster Adapter | Low-latency bidirectional events, delivery receipts, typing indicators, presence, room-based isolation, and HTTP long-polling fallback. | [ADR-008](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-008-realtime.md) |
-| **Object Storage** | **S3-Compatible Object Storage** (MinIO for local dev / AWS S3) | Zero-proxy direct browser uploads/downloads via short-lived signed URLs (TTL <= 15m); ClamAV malware scanning pipeline. | [ADR-009](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-009-storage.md) |
-| **Email** | **Transactional Email** via `IEmailService` (Resend / AWS SES) | Non-blocking queue-based email dispatch; React Email templates; deliverability tracking. | [ADR-010](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-010-email.md) |
-| **Scheduling** | **Native Scheduler + RFC 5545 iCalendar (`.ics`)** | Zero external calendar OAuth compliance friction; universal Outlook/Google/Apple Calendar compatibility; timezone-safe. | [ADR-011](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-011-calendar.md) |
-| **Deployment** | **Containerized Cloud Deployment** (Docker / AWS ECS / Cloud Run) | Multi-stage Docker containers, zero-downtime rolling updates, automated pre-deployment migrations. | [ADR-012](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-012-deployment.md) |
-| **Observability** | **Pino JSON + Sentry APM + OpenTelemetry** | Fast structured logging with automatic PII scrubbing; distributed error tracing; Prometheus metrics; zero vendor lock-in. | [ADR-013](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-013-observability.md) |
-| **Future Mobile** | **Flutter (Dart)** | Shared REST & Socket.IO backend API; single cross-platform codebase for iOS and Android. | [23-mobile-readiness.md](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/23-mobile-readiness.md) |
+| Layer                  | Selected Production Technology                                                   | Architectural Justification                                                                                                                                          | Reference ADR                                                                                                            |
+| ---------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Web Frontend**       | **Next.js 14+ (App Router)** / React 18+ / TypeScript / Tailwind CSS / Radix UI  | Hybrid React Server Components (RSC) for fast SEO-rendered public previews; interactive client components for chat/scheduling; shared TypeScript types with backend. | [ADR-001](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-001-frontend.md)                      |
+| **Backend API**        | **Node.js 20 LTS / NestJS 10+** (Strict TypeScript)                              | Enterprise Modular Monolith with Inversion of Control (IoC), Dependency Injection, clean domain boundaries, and automated OpenAPI 3.0 generation.                    | [ADR-002](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-002-backend.md)                       |
+| **Primary Database**   | **PostgreSQL 16+** with `pgvector` & `pg_trgm`                                   | Strict ACID transactional consistency; unified relational, JSONB document, and 1536d vector embedding storage in a single engine with zero ETL lag.                  | [ADR-003](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-003-database.md)                      |
+| **ORM / Migrations**   | **Prisma ORM 5+**                                                                | Declarative schema as single source of truth; type-safe client generation; automated migration and seed engine.                                                      | [ADR-004](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-004-orm.md)                           |
+| **Authentication**     | **Dual-Token JWT** (15m Access Token) + DB/Redis Stateful Refresh Token Rotation | XSS-immune browser cookies; native mobile Bearer header compatibility; immediate server-side session revocation.                                                     | [ADR-005](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-005-authentication.md)                |
+| **AI Matching Engine** | **Hybrid Grounded AI Matching Engine** via Abstracted `IAiProvider`              | Two-stage grounded pipeline: relational filtering + `pgvector` semantic retrieval + deterministic multi-factor scoring + LLM explainability.                         | [ADR-006](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-006-ai.md)                            |
+| **Search & Discovery** | **PostgreSQL native** (`pg_trgm` + `pgvector` HNSW)                              | Single-engine hybrid queries combining exact boolean taxonomy filters with sub-25ms cosine similarity ranking.                                                       | [ADR-007](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-007-search.md)                        |
+| **Real-Time Push**     | **WebSockets / Socket.IO** with Redis Cluster Adapter                            | Low-latency bidirectional events, delivery receipts, typing indicators, presence, room-based isolation, and HTTP long-polling fallback.                              | [ADR-008](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-008-realtime.md)                      |
+| **Object Storage**     | **S3-Compatible Object Storage** (MinIO for local dev / AWS S3)                  | Zero-proxy direct browser uploads/downloads via short-lived signed URLs (TTL <= 15m); ClamAV malware scanning pipeline.                                              | [ADR-009](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-009-storage.md)                       |
+| **Email**              | **Transactional Email** via `IEmailService` (Resend / AWS SES)                   | Non-blocking queue-based email dispatch; React Email templates; deliverability tracking.                                                                             | [ADR-010](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-010-email.md)                         |
+| **Scheduling**         | **Native Scheduler + RFC 5545 iCalendar (`.ics`)**                               | Zero external calendar OAuth compliance friction; universal Outlook/Google/Apple Calendar compatibility; timezone-safe.                                              | [ADR-011](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-011-calendar.md)                      |
+| **Deployment**         | **Containerized Cloud Deployment** (Docker / AWS ECS / Cloud Run)                | Multi-stage Docker containers, zero-downtime rolling updates, automated pre-deployment migrations.                                                                   | [ADR-012](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-012-deployment.md)                    |
+| **Observability**      | **Pino JSON + Sentry APM + OpenTelemetry**                                       | Fast structured logging with automatic PII scrubbing; distributed error tracing; Prometheus metrics; zero vendor lock-in.                                            | [ADR-013](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/decisions/ADR-013-observability.md)                 |
+| **Future Mobile**      | **Flutter (Dart)**                                                               | Shared REST & Socket.IO backend API; single cross-platform codebase for iOS and Android.                                                                             | [23-mobile-readiness.md](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/23-mobile-readiness.md) |
 
 ---
 
@@ -221,6 +237,7 @@ The complete architecture is documented across 26 formal specifications in `docs
 27. [`26-final-architecture-audit.md`](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/26-final-architecture-audit.md) — Formal gate review determination (PASS).
 
 ### Companion Master Documents:
+
 - [Requirements Traceability Matrix](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/traceability-matrix.md)
 - [Architectural Risk Register](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/risk-register.md)
 - [Non-Functional Requirements Specification](file:///c:/Users/Vishal%20S%20Naik/MyProjects/MerQent/docs/architecture/non-functional-requirements.md)
@@ -230,43 +247,78 @@ The complete architecture is documented across 26 formal specifications in `docs
 
 ---
 
-## 7. Local Development Quickstart
+## 7. Developer Quickstart & Command Reference
 
-To run the local infrastructure components (PostgreSQL 16 with `pgvector`, Redis 7.2, and MinIO):
+### 7.1 Prerequisites
+
+Before developing on MerQent, ensure your environment meets the following baseline requirements:
+
+| Tool                        | Version Requirement                   | Purpose                                       |
+| --------------------------- | ------------------------------------- | --------------------------------------------- |
+| **Node.js**                 | `>= 20.0.0 LTS`                       | Monorepo runtime                              |
+| **pnpm**                    | `9.5.0` (pinned via `packageManager`) | Fast, deterministic workspace package manager |
+| **Docker & Docker Compose** | Latest Desktop / Engine               | Local PostgreSQL 16 + pgvector, Redis, MinIO  |
+| **Git**                     | `>= 2.40.0`                           | Version control                               |
+
+### 7.2 Bootstrap & Environment Setup
 
 ```bash
 # 1. Clone repository
 git clone https://github.com/Vish-0806/MerQent.git
 cd MerQent
 
-# 2. Copy environment template
+# 2. Copy environment template (safe default values, no production secrets)
 cp .env.example .env
 
-# 3. Start local Docker services
+# 3. Install all monorepo dependencies reproducibly
+pnpm install
+
+# 4. (Optional) Start local Docker infrastructure (PostgreSQL 16, pgvector, Redis, MinIO)
 cd infrastructure/docker
 docker compose up -d
-
-# 4. Install dependencies via pnpm (Phase 2 readiness)
-pnpm install
+cd ../..
 ```
+
+### 7.3 Workspace Commands
+
+MerQent uses **Turborepo** to orchestrate tasks across the monorepo. Every command below is functional and verified:
+
+| Command             | Action                                                              | Scope                             |
+| ------------------- | ------------------------------------------------------------------- | --------------------------------- |
+| `pnpm dev`          | Run all applications in development mode with live reload           | Monorepo (`web:3000`, `api:4000`) |
+| `pnpm build`        | Compile shared packages, NestJS API, and Next.js production bundle  | All workspaces via Turborepo      |
+| `pnpm lint`         | Execute ESLint across all applications and packages                 | All workspaces                    |
+| `pnpm typecheck`    | Execute strict TypeScript compiler check (`tsc --noEmit`)           | All workspaces                    |
+| `pnpm test`         | Execute test runner (Jest) across the workspace                     | `@merqent/api` + test suites      |
+| `pnpm format:check` | Check code formatting adherence against Prettier                    | Root and packages                 |
+| `pnpm format`       | Reformat codebase adhering to `.prettierrc` rules                   | Root and packages                 |
+| `pnpm clean`        | Cross-platform cleanup of `.turbo`, `dist`, `.next`, and `coverage` | All workspaces                    |
+| `pnpm db:generate`  | Generate Prisma Client from `prisma/schema.prisma`                  | `@merqent/api`                    |
+| `pnpm db:migrate`   | Apply database migrations to local PostgreSQL                       | `@merqent/api`                    |
+| `pnpm db:seed`      | Seed canonical PMI taxonomies into database                         | `@merqent/api`                    |
+| `pnpm db:studio`    | Launch Prisma Studio GUI browser                                    | `@merqent/api`                    |
 
 ---
 
-## 8. Development Methodology & Contributing
+## 8. Development Methodology & Phase Gates
 
 MerQent development follows strict engineering phase discipline:
+
 1. Every phase must complete its architectural specifications and quality checks before feature code is committed.
 2. Direct commits of unvetted dependencies, untested migrations, or ungrounded AI prompts are prohibited.
 3. All code modifications require Pull Requests passing automated CI linting, typechecks, and security scans.
+4. Business logic features must never be implemented prematurely; each task adheres strictly to its phase boundary.
 
 ---
 
-## 9. Final Phase 1 Determination
+## 9. Current Phase Status
 
 ```text
 ====================================================================
-PHASE 1 STATUS:          COMPLETE
-ARCHITECTURE AUDIT:      PASS
-READY FOR PHASE 2:       YES
+PHASE 1 (Architecture):              COMPLETE (AUDIT PASSED)
+PHASE 2.1 (Workspace Init):          COMPLETE (ALL CHECKS PASSED)
+STATUS:                              READY FOR REVIEW
+NEXT TASK:                           Task 2.2 — Development Environment
+                                     & Configuration Foundation
 ====================================================================
 ```

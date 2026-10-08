@@ -7,16 +7,10 @@ export const metadata: Metadata = {
     'Specialized B2B marketplace connecting private equity firms with vetted operators and consultants experienced in unifying ERPs, cultures, and accounting systems post-acquisition.',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body className="bg-[#0B0F19] text-slate-100 antialiased min-h-screen">
-        {children}
-      </body>
+      <body className="bg-[#0B0F19] text-slate-100 antialiased min-h-screen">{children}</body>
     </html>
   );
 }

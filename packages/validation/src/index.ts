@@ -1,9 +1,5 @@
 import { z } from 'zod';
-import {
-  UserRole,
-  PrimaryRoleType,
-  AvailabilityStatus,
-} from '@merqent/shared-types';
+import { UserRole, PrimaryRoleType, AvailabilityStatus } from '@merqent/shared-types';
 
 export const RegisterUserSchema = z.object({
   email: z.string().email('Invalid business email address'),

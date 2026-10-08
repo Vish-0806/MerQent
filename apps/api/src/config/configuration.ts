@@ -1,7 +1,9 @@
 export default () => ({
   port: parseInt(process.env.PORT || '4000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
-  databaseUrl: process.env.DATABASE_URL || 'postgresql://merqent:merqent_dev_secret@localhost:5432/merqent_db?schema=public',
+  databaseUrl:
+    process.env.DATABASE_URL ||
+    'postgresql://merqent:merqent_dev_secret@localhost:5432/merqent_db?schema=public',
   jwt: {
     secret: process.env.JWT_SECRET || 'dev_jwt_secret_must_change_in_production_min32chars',
     expiresIn: process.env.JWT_EXPIRES_IN || '15m',
