@@ -93,6 +93,7 @@ export class ApiClient {
 
     try {
       const response = await fetch(url, {
+        credentials: 'include',
         ...customConfig,
         headers: requestHeaders,
       });

@@ -12,6 +12,7 @@ import { StorageModule } from '../infrastructure/storage/storage.module';
 import { EmailModule } from '../infrastructure/email/email.module';
 import { AiModule } from '../infrastructure/ai/ai.module';
 import { SearchInfrastructureModule } from '../infrastructure/search/search.module';
+import { RedisModule } from '../infrastructure/redis/redis.module';
 
 // Domain Module Shells (Architecture-Ready)
 import { AuthModule } from '../modules/auth/auth.module';
@@ -40,6 +41,7 @@ import { AuditModule } from '../modules/audit/audit.module';
       load: [configuration],
     }),
     DatabaseModule,
+    RedisModule,
     ObservabilityModule,
     RealtimeModule,
     StorageModule,

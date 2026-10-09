@@ -3,6 +3,7 @@ import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { json, urlencoded } from 'express';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app/app.module';
 import { AppLogger } from './infrastructure/observability/logger.service';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
@@ -29,6 +30,7 @@ async function bootstrap() {
   // Security: Payload body size limits
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
+  app.use(cookieParser());
 
   // CORS configuration
   app.enableCors({
