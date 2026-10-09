@@ -1,4 +1,11 @@
-// Canonical Domain Enums & Types for MerQent
+/**
+ * Canonical Domain Enums, Contracts, and Shared Types for MerQent
+ * Shared across frontend (Next.js), backend (NestJS), and workspace packages.
+ */
+
+// ============================================================================
+// 1. Domain Enums (Aligned with Prisma Schema)
+// ============================================================================
 
 export enum UserRole {
   PE_FIRM_ADMIN = 'PE_FIRM_ADMIN',
@@ -84,11 +91,23 @@ export enum TaxonomyCategory {
   PMI_TASK = 'PMI_TASK',
 }
 
+export enum VerificationRequestStatus {
+  PENDING_REVIEW = 'PENDING_REVIEW',
+  IN_REVIEW = 'IN_REVIEW',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  INFO_REQUESTED = 'INFO_REQUESTED',
+}
+
 export enum FileScanStatus {
   PENDING = 'PENDING',
   CLEAN = 'CLEAN',
   INFECTED = 'INFECTED',
 }
+
+// ============================================================================
+// 2. User & Session Context
+// ============================================================================
 
 export interface UserContext {
   id: string;
@@ -96,4 +115,108 @@ export interface UserContext {
   role: UserRole;
   firmId?: string;
   consultantProfileId?: string;
+}
+
+// ============================================================================
+// 3. Pagination & Query Parameters
+// ============================================================================
+
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
+
+export type SortOrder = 'asc' | 'desc';
+
+export interface SortParams {
+  sortBy?: string;
+  sortOrder?: SortOrder;
+}
+
+export interface SearchQueryParams extends PaginationParams, SortParams {
+  query?: string;
+  filter?: Record<string, unknown>;
+}
+
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
+}
+
+// ============================================================================
+// 4. Standardized API Responses & Errors
+// ============================================================================
+
+export interface ApiResponse<T = unknown> {
+  data: T;
+  meta?: PaginationMeta;
+  message?: string;
+  timestamp: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
+  message?: string;
+  timestamp: string;
+}
+
+export interface ApiErrorDetail {
+  field?: string;
+  message: string;
+  code?: string;
+}
+
+export interface ApiErrorResponse {
+  statusCode: number;
+  message: string | string[];
+  error: string;
+  timestamp: string;
+  path?: string;
+  correlationId?: string;
+  details?: ApiErrorDetail[];
+}
+
+export type HealthCheckStatus = 'ok' | 'degraded';
+export type DependencyStatus = 'connected' | 'disconnected';
+
+export interface DatabaseHealthStatus {
+  status: DependencyStatus;
+  latencyMs?: number;
+}
+
+export interface DependencyStatusMap {
+  database: DatabaseHealthStatus;
+}
+
+export interface HealthResponse {
+  status: HealthCheckStatus;
+  service: string;
+  version: string;
+  environment: string;
+  timestamp: string;
+  uptime: number;
+  dependencies: DependencyStatusMap;
+}
+
+// ============================================================================
+// 5. Common Identifiers & Primitives
+// ============================================================================
+
+export interface IdParam {
+  id: string;
+}
+
+export interface TimestampFields {
+  createdAt: string | Date;
+  updatedAt?: string | Date;
+}
+
+export interface DateRangeParams {
+  startDate?: string | Date;
+  endDate?: string | Date;
 }

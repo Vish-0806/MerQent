@@ -33,22 +33,9 @@ export interface SiteConfig {
   };
 }
 
-export interface ApiResponse<T = unknown> {
-  data: T;
-  meta?: {
-    total?: number;
-    page?: number;
-    limit?: number;
-    totalPages?: number;
-  };
-  message?: string;
-  timestamp: string;
-}
-
-export interface ApiErrorResponse {
-  statusCode: number;
-  message: string | string[];
-  error?: string;
-  timestamp: string;
-  path?: string;
-}
+export type {
+  ApiResponse,
+  ApiErrorResponse,
+  PaginationMeta,
+  PaginatedResponse,
+} from '@merqent/shared-types';

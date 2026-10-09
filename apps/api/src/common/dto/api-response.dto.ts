@@ -1,6 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiErrorResponse,
+  HealthResponse,
+  PaginationMeta,
+  DatabaseHealthStatus,
+  DependencyStatusMap,
+} from '@merqent/shared-types';
 
-export class ErrorResponseDto {
+export class ErrorResponseDto implements ApiErrorResponse {
   @ApiProperty({ example: 400, description: 'HTTP status code' })
   statusCode!: number;
 
@@ -26,7 +33,7 @@ export class ErrorResponseDto {
   error!: string;
 }
 
-export class DatabaseDependencyStatusDto {
+export class DatabaseDependencyStatusDto implements DatabaseHealthStatus {
   @ApiProperty({ enum: ['connected', 'disconnected'], example: 'connected' })
   status!: 'connected' | 'disconnected';
 
@@ -34,12 +41,12 @@ export class DatabaseDependencyStatusDto {
   latencyMs?: number;
 }
 
-export class DependencyStatusMapDto {
+export class DependencyStatusMapDto implements DependencyStatusMap {
   @ApiProperty({ type: DatabaseDependencyStatusDto })
   database!: DatabaseDependencyStatusDto;
 }
 
-export class HealthResponseDto {
+export class HealthResponseDto implements HealthResponse {
   @ApiProperty({ enum: ['ok', 'degraded'], example: 'ok' })
   status!: 'ok' | 'degraded';
 
@@ -62,7 +69,7 @@ export class HealthResponseDto {
   dependencies!: DependencyStatusMapDto;
 }
 
-export class PaginationMetaDto {
+export class PaginationMetaDto implements PaginationMeta {
   @ApiProperty({ example: 100, description: 'Total number of items' })
   total!: number;
 

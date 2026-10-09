@@ -1,4 +1,4 @@
-import { ApiErrorResponse } from '../types';
+import { ApiErrorResponse } from '@merqent/shared-types';
 
 /**
  * Standardized API client error capturing status, payload, and user-facing messages.

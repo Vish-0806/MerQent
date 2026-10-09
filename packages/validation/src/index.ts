@@ -1,5 +1,45 @@
+/**
+ * Canonical Zod Validation Schemas for MerQent
+ * Shared across frontend forms and backend validation pipelines.
+ */
 import { z } from 'zod';
 import { UserRole, PrimaryRoleType, AvailabilityStatus } from '@merqent/shared-types';
+
+// ============================================================================
+// 1. Common Query & Identifier Schemas
+// ============================================================================
+
+export const IdParamSchema = z.object({
+  id: z.string().uuid('Invalid UUID identifier'),
+});
+
+export const PaginationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1, 'Page must be at least 1').default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1, 'Limit must be at least 1')
+    .max(100, 'Limit cannot exceed 100')
+    .default(20),
+});
+
+export const SortQuerySchema = z.object({
+  sortBy: z.string().max(50).optional(),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+});
+
+export const SearchQuerySchema = PaginationQuerySchema.merge(SortQuerySchema).extend({
+  query: z.string().max(200).optional(),
+});
+
+export const DateRangeQuerySchema = z.object({
+  startDate: z.string().datetime({ message: 'startDate must be a valid ISO datetime' }).optional(),
+  endDate: z.string().datetime({ message: 'endDate must be a valid ISO datetime' }).optional(),
+});
+
+// ============================================================================
+// 2. User & Authentication Input Schemas
+// ============================================================================
 
 export const RegisterUserSchema = z.object({
   email: z.string().email('Invalid business email address'),
@@ -19,13 +59,17 @@ export const LoginUserSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+// ============================================================================
+// 3. Domain Entity Input Schemas
+// ============================================================================
+
 export const CreateProjectSchema = z.object({
   title: z.string().min(5, 'Project title must be at least 5 characters'),
   confidentialNameMasked: z.string().min(3, 'Confidential mask name required'),
   description: z.string().min(20, 'Detailed project description required'),
-  industryTermId: z.string().uuid(),
-  dealTypeTermId: z.string().uuid(),
-  targetStartDate: z.string().datetime(),
+  industryTermId: z.string().uuid('Invalid industry taxonomy ID'),
+  dealTypeTermId: z.string().uuid('Invalid deal type taxonomy ID'),
+  targetStartDate: z.string().datetime('Target start date must be a valid ISO datetime string'),
   estimatedDurationMonths: z.number().int().min(1).max(36),
   requiredTravelPercent: z.number().int().min(0).max(100),
   geographyCountry: z.string().min(2),
@@ -42,6 +86,15 @@ export const UpdateConsultantProfileSchema = z.object({
   willingToTravelPercent: z.number().int().min(0).max(100),
 });
 
+// ============================================================================
+// 4. Inferred TypeScript Types
+// ============================================================================
+
+export type IdParamInput = z.infer<typeof IdParamSchema>;
+export type PaginationQueryInput = z.infer<typeof PaginationQuerySchema>;
+export type SortQueryInput = z.infer<typeof SortQuerySchema>;
+export type SearchQueryInput = z.infer<typeof SearchQuerySchema>;
+export type DateRangeQueryInput = z.infer<typeof DateRangeQuerySchema>;
 export type RegisterUserInput = z.infer<typeof RegisterUserSchema>;
 export type LoginUserInput = z.infer<typeof LoginUserSchema>;
 export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
