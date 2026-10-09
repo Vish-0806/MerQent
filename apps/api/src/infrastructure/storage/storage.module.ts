@@ -21,6 +21,13 @@ class SandboxStorageService implements IStorageService {
   }
 
   async deleteFile(_fileKey: string): Promise<void> {}
+
+  async checkHealth() {
+    return {
+      status: 'connected' as const,
+      latencyMs: 1,
+    };
+  }
 }
 
 @Module({

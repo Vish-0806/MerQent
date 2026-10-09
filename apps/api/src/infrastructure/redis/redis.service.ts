@@ -70,6 +70,28 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return this.isConnected;
   }
 
+  /**
+   * Health check probe for Redis connectivity and latency.
+   */
+  async checkHealth(): Promise<{ status: 'connected' | 'disconnected'; latencyMs?: number }> {
+    if (!this.client || !this.isConnected) {
+      return { status: 'disconnected' };
+    }
+    const start = Date.now();
+    try {
+      const pong = await this.client.ping();
+      if (pong === 'PONG') {
+        return {
+          status: 'connected',
+          latencyMs: Date.now() - start,
+        };
+      }
+      return { status: 'disconnected' };
+    } catch {
+      return { status: 'disconnected' };
+    }
+  }
+
   async get(key: string): Promise<string | null> {
     if (!this.client) return null;
     try {

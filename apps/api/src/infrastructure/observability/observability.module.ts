@@ -1,9 +1,12 @@
 import { Global, Module } from '@nestjs/common';
 import { AppLogger } from './logger.service';
+import { MetricsService } from './metrics.service';
+import { MetricsController } from './metrics.controller';
 
 @Global()
 @Module({
-  providers: [AppLogger],
-  exports: [AppLogger],
+  controllers: [MetricsController],
+  providers: [AppLogger, MetricsService],
+  exports: [AppLogger, MetricsService],
 })
 export class ObservabilityModule {}

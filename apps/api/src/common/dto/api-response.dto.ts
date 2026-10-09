@@ -4,6 +4,7 @@ import {
   HealthResponse,
   PaginationMeta,
   DatabaseHealthStatus,
+  GenericDependencyHealthStatus,
   DependencyStatusMap,
 } from '@merqent/shared-types';
 
@@ -70,9 +71,31 @@ export class DatabaseDependencyStatusDto implements DatabaseHealthStatus {
   latencyMs?: number;
 }
 
+export class RedisDependencyStatusDto implements GenericDependencyHealthStatus {
+  @ApiProperty({ enum: ['connected', 'disconnected'], example: 'connected' })
+  status!: 'connected' | 'disconnected';
+
+  @ApiPropertyOptional({ example: 1, description: 'Ping round-trip latency in milliseconds' })
+  latencyMs?: number;
+}
+
+export class StorageDependencyStatusDto implements GenericDependencyHealthStatus {
+  @ApiProperty({ enum: ['connected', 'disconnected'], example: 'connected' })
+  status!: 'connected' | 'disconnected';
+
+  @ApiPropertyOptional({ example: 1, description: 'Storage probe latency in milliseconds' })
+  latencyMs?: number;
+}
+
 export class DependencyStatusMapDto implements DependencyStatusMap {
   @ApiProperty({ type: DatabaseDependencyStatusDto })
   database!: DatabaseDependencyStatusDto;
+
+  @ApiPropertyOptional({ type: RedisDependencyStatusDto })
+  redis?: RedisDependencyStatusDto;
+
+  @ApiPropertyOptional({ type: StorageDependencyStatusDto })
+  storage?: StorageDependencyStatusDto;
 }
 
 export class HealthResponseDto implements HealthResponse {

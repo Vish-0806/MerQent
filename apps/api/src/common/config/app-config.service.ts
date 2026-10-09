@@ -24,6 +24,14 @@ export class AppConfigService {
     return this.config.get<number>('port', 4000);
   }
 
+  get logLevel(): string {
+    return (
+      this.config.get<string>('observability.logLevel') ||
+      process.env.LOG_LEVEL ||
+      (this.isProduction ? 'info' : 'debug')
+    );
+  }
+
   get apiBaseUrl(): string {
     return this.config.get<string>('apiBaseUrl', 'http://localhost:4000');
   }

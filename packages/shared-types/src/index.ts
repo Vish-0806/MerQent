@@ -384,13 +384,19 @@ export interface ApiErrorResponse {
 export type HealthCheckStatus = 'ok' | 'degraded';
 export type DependencyStatus = 'connected' | 'disconnected';
 
-export interface DatabaseHealthStatus {
+export interface GenericDependencyHealthStatus {
   status: DependencyStatus;
   latencyMs?: number;
 }
 
+export type DatabaseHealthStatus = GenericDependencyHealthStatus;
+export type RedisHealthStatus = GenericDependencyHealthStatus;
+export type StorageHealthStatus = GenericDependencyHealthStatus;
+
 export interface DependencyStatusMap {
   database: DatabaseHealthStatus;
+  redis?: RedisHealthStatus;
+  storage?: StorageHealthStatus;
 }
 
 export interface HealthResponse {
@@ -401,6 +407,51 @@ export interface HealthResponse {
   timestamp: string;
   uptime: number;
   dependencies: DependencyStatusMap;
+}
+
+export interface LivenessResponse {
+  status: 'ok';
+  timestamp: string;
+  uptime: number;
+}
+
+export interface ReadinessResponse {
+  status: 'ready' | 'not_ready';
+  timestamp: string;
+  dependencies: DependencyStatusMap;
+}
+
+export interface MetricsSnapshot {
+  timestamp: string;
+  uptimeSeconds: number;
+  requests: {
+    total: number;
+    inFlight: number;
+    byMethod: Record<string, number>;
+    byStatus: Record<string, number>;
+  };
+  latencyMs: {
+    avg: number;
+    min: number;
+    max: number;
+    p50: number;
+    p90: number;
+    p95: number;
+    p99: number;
+  };
+  errors: {
+    total: number;
+    clientErrors: number;
+    serverErrors: number;
+    errorRatePercent: number;
+  };
+  memoryBytes: {
+    heapUsed: number;
+    heapTotal: number;
+    rss: number;
+    external: number;
+  };
+  dependencies: Record<string, { healthy: boolean; latencyMs?: number }>;
 }
 
 // ============================================================================

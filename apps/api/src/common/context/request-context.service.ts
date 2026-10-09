@@ -51,6 +51,10 @@ export class RequestContextService {
     return this.getContext()?.user;
   }
 
+  public getUser(): RequestUserContext | undefined {
+    return this.getCurrentUser();
+  }
+
   /**
    * Returns the active tenant (firmId) for the authenticated user.
    */

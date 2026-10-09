@@ -9,6 +9,7 @@ import { AppLogger } from './infrastructure/observability/logger.service';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { MetricsService } from './infrastructure/observability/metrics.service';
 import { ErrorCode, ApiErrorDetail } from '@merqent/shared-types';
 
 async function bootstrap() {
@@ -50,7 +51,8 @@ async function bootstrap() {
 
   // Global interceptors (Logging with correlation ID + standard response envelope)
   const reflector = app.get(Reflector);
-  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor(reflector));
+  const metrics = app.get(MetricsService);
+  app.useGlobalInterceptors(new LoggingInterceptor(metrics), new TransformInterceptor(reflector));
 
   // Global validation pipe with structured error formatting
   app.useGlobalPipes(
@@ -110,6 +112,7 @@ async function bootstrap() {
       'bearer-jwt',
     )
     .addTag('Health', 'API runtime health probes and database connectivity verification')
+    .addTag('Observability', 'Application telemetry, request metrics, and latency diagnostics')
     .addTag('Auth', 'Dual-token authentication and session lifecycle')
     .addTag('Users', 'User accounts, permissions, and roles')
     .addTag('Organizations', 'PE firms, portfolio companies, and advisory firms')

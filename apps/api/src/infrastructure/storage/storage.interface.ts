@@ -13,8 +13,14 @@ export interface PresignUploadResponse {
 
 export const STORAGE_SERVICE_TOKEN = 'IStorageService';
 
+export interface StorageHealthStatus {
+  status: 'connected' | 'disconnected';
+  latencyMs?: number;
+}
+
 export interface IStorageService {
   getPresignedUploadUrl(request: PresignUploadRequest): Promise<PresignUploadResponse>;
   getPresignedDownloadUrl(fileKey: string, expiresInSeconds?: number): Promise<string>;
   deleteFile(fileKey: string): Promise<void>;
+  checkHealth?(): Promise<StorageHealthStatus>;
 }
