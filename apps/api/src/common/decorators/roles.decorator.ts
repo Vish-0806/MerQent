@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import { SystemRole } from '@merqent/shared-types';
+import { UserRole } from '@merqent/shared-types';
 
 export const ROLES_KEY = 'roles';
-export const Roles = (...roles: SystemRole[]) => SetMetadata(ROLES_KEY, roles);
+export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);

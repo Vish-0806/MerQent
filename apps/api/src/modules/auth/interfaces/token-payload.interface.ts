@@ -5,6 +5,8 @@ export interface JwtAccessPayload {
   email: string;
   role: UserRole;
   type: 'access';
+  firmId?: string;
+  consultantProfileId?: string;
 }
 
 export interface JwtRefreshPayload {

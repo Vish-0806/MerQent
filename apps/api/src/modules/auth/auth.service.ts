@@ -94,6 +94,7 @@ export class AuthService {
     // 2. Retrieve user record
     const user = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
+      include: { firmMember: true, consultantProfile: true },
     });
 
     // Timing-safe fallback hash if user does not exist
@@ -131,6 +132,8 @@ export class AuthService {
       user.role,
       ipAddress,
       deviceInfo,
+      user.firmMember?.firmId,
+      user.consultantProfile?.id,
     );
 
     this.logger.log(`User logged in successfully: ${user.id}`);
@@ -240,6 +243,7 @@ export class AuthService {
     // Fetch user and check active status
     const user = await this.prisma.user.findUnique({
       where: { id: tokenRecord.userId },
+      include: { firmMember: true, consultantProfile: true },
     });
 
     if (!user) {
@@ -257,6 +261,8 @@ export class AuthService {
       user.role,
       ipAddress || tokenRecord.ipAddress || undefined,
       deviceInfo || tokenRecord.deviceInfo || undefined,
+      user.firmMember?.firmId,
+      user.consultantProfile?.id,
     );
 
     this.logger.log(`Session rotated successfully for user ${user.id}`);
@@ -330,6 +336,8 @@ export class AuthService {
     role: string | UserRole,
     ipAddress?: string,
     deviceInfo?: string,
+    firmId?: string,
+    consultantProfileId?: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const accessSecret = this.config.get<string>('jwt.secret');
     const accessExpiresIn = this.config.get<string>('jwt.expiresIn', '15m');
@@ -342,6 +350,8 @@ export class AuthService {
       email,
       role: role as UserRole,
       type: 'access',
+      firmId,
+      consultantProfileId,
     };
 
     const accessToken = await this.jwtService.signAsync(accessPayload, {

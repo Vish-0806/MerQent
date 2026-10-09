@@ -1,14 +1,30 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { SystemRole } from '@merqent/shared-types';
+import { UserRole } from '@merqent/shared-types';
 import { ROLES_KEY } from '../decorators/roles.decorator';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<SystemRole[]>(ROLES_KEY, [
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (isPublic) {
+      return true;
+    }
+
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -18,10 +34,19 @@ export class RolesGuard implements CanActivate {
     }
 
     const { user } = context.switchToHttp().getRequest();
+
     if (!user || !user.role) {
-      return false;
+      throw new UnauthorizedException('Authentication required');
     }
 
-    return requiredRoles.includes(user.role);
+    const hasRequiredRole = requiredRoles.includes(user.role);
+
+    if (!hasRequiredRole) {
+      throw new ForbiddenException(
+        `Forbidden: Role '${user.role}' is not authorized to access this resource`,
+      );
+    }
+
+    return true;
   }
 }

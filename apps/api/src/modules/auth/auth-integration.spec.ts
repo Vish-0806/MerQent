@@ -22,6 +22,7 @@ describe('Live Database & Redis Auth Integration (Task 2.8)', () => {
   let createdUserId: string | null = null;
 
   beforeAll(async () => {
+    jest.setTimeout(30000);
     prisma = new PrismaClient({
       datasources: {
         db: {

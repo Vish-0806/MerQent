@@ -11,6 +11,8 @@ export interface AuthUser {
   avatarUrl?: string | null;
   emailVerifiedAt?: Date | null;
   mfaEnabled: boolean;
+  firmId?: string;
+  consultantProfileId?: string;
   createdAt: Date;
 }
 
