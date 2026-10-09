@@ -259,9 +259,61 @@ export interface PaginationMeta {
   hasPreviousPage?: boolean;
 }
 
+/**
+ * Computes standardized pagination metadata with accurate page bounds and flags.
+ */
+export function createPaginationMeta(total: number, page: number, limit: number): PaginationMeta {
+  const safeTotal = Math.max(0, total);
+  const safeLimit = Math.max(1, limit);
+  const safePage = Math.max(1, page);
+  const totalPages = Math.ceil(safeTotal / safeLimit);
+
+  return {
+    total: safeTotal,
+    page: safePage,
+    limit: safeLimit,
+    totalPages,
+    hasNextPage: safePage < totalPages,
+    hasPreviousPage: safePage > 1 && safePage <= totalPages + 1,
+  };
+}
+
 // ============================================================================
 // 4. Standardized API Responses & Errors
 // ============================================================================
+
+/**
+ * Canonical Machine-Readable Error Codes for MerQent API
+ */
+export enum ErrorCode {
+  // General & System
+  INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
+  BAD_REQUEST = 'BAD_REQUEST',
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  NOT_FOUND = 'NOT_FOUND',
+  CONFLICT = 'CONFLICT',
+  METHOD_NOT_ALLOWED = 'METHOD_NOT_ALLOWED',
+
+  // Authentication & Authorization
+  UNAUTHORIZED = 'UNAUTHORIZED',
+  INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
+  TOKEN_EXPIRED = 'TOKEN_EXPIRED',
+  TOKEN_INVALID = 'TOKEN_INVALID',
+  FORBIDDEN = 'FORBIDDEN',
+  INSUFFICIENT_PERMISSIONS = 'INSUFFICIENT_PERMISSIONS',
+  TENANT_ACCESS_DENIED = 'TENANT_ACCESS_DENIED',
+  ACCOUNT_SUSPENDED = 'ACCOUNT_SUSPENDED',
+  ACCOUNT_DEACTIVATED = 'ACCOUNT_DEACTIVATED',
+
+  // Database & Entity Lifecycle
+  UNIQUE_CONSTRAINT_VIOLATION = 'UNIQUE_CONSTRAINT_VIOLATION',
+  FOREIGN_KEY_VIOLATION = 'FOREIGN_KEY_VIOLATION',
+  RECORD_NOT_FOUND = 'RECORD_NOT_FOUND',
+
+  // Rate Limiting & Networking
+  RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
+  SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
+}
 
 export interface ApiResponse<T = unknown> {
   data: T;
@@ -277,6 +329,41 @@ export interface PaginatedResponse<T> {
   timestamp: string;
 }
 
+/**
+ * Creates a standard API response envelope with an ISO timestamp.
+ */
+export function createApiResponse<T>(
+  data: T,
+  meta?: PaginationMeta,
+  message?: string,
+): ApiResponse<T> {
+  return {
+    data,
+    ...(meta ? { meta } : {}),
+    ...(message ? { message } : {}),
+    timestamp: new Date().toISOString(),
+  };
+}
+
+/**
+ * Creates a standard paginated response envelope with calculated metadata.
+ */
+export function createPaginatedResponse<T>(
+  data: T[],
+  total: number,
+  page: number,
+  limit: number,
+  message?: string,
+): PaginatedResponse<T> {
+  const meta = createPaginationMeta(total, page, limit);
+  return {
+    data,
+    meta,
+    ...(message ? { message } : {}),
+    timestamp: new Date().toISOString(),
+  };
+}
+
 export interface ApiErrorDetail {
   field?: string;
   message: string;
@@ -285,6 +372,7 @@ export interface ApiErrorDetail {
 
 export interface ApiErrorResponse {
   statusCode: number;
+  errorCode?: ErrorCode | string;
   message: string | string[];
   error: string;
   timestamp: string;

@@ -1,24 +1,102 @@
-import { ApiErrorResponse } from '@merqent/shared-types';
+import {
+  ApiErrorResponse,
+  ApiErrorDetail,
+  ErrorCode,
+  ApiResponse,
+  PaginatedResponse,
+} from '@merqent/shared-types';
 
 /**
- * Standardized API client error capturing status, payload, and user-facing messages.
+ * Standardized API client error capturing status, payload, error code, correlation ID, and granular constraint details.
  */
 export class ApiClientError extends Error {
   public readonly status: number;
   public readonly data?: unknown;
+  public readonly errorCode?: string;
+  public readonly correlationId?: string;
+  public readonly details?: ApiErrorDetail[];
+  public readonly timestamp?: string;
+  public readonly path?: string;
 
-  constructor(message: string, status: number, data?: unknown) {
+  constructor(
+    message: string,
+    status: number,
+    data?: unknown,
+    options?: {
+      errorCode?: string;
+      correlationId?: string;
+      details?: ApiErrorDetail[];
+      timestamp?: string;
+      path?: string;
+    },
+  ) {
     super(message);
     this.name = 'ApiClientError';
     this.status = status;
     this.data = data;
+    this.errorCode = options?.errorCode;
+    this.correlationId = options?.correlationId;
+    this.details = options?.details;
+    this.timestamp = options?.timestamp;
+    this.path = options?.path;
     Object.setPrototypeOf(this, ApiClientError.prototype);
+  }
+
+  public isUnauthorized(): boolean {
+    return this.status === 401;
+  }
+
+  public isForbidden(): boolean {
+    return this.status === 403;
+  }
+
+  public isNotFound(): boolean {
+    return this.status === 404;
+  }
+
+  public isConflict(): boolean {
+    return this.status === 409;
+  }
+
+  public isValidationError(): boolean {
+    return (
+      this.status === 400 &&
+      (this.errorCode === ErrorCode.VALIDATION_ERROR || (!!this.details && this.details.length > 0))
+    );
+  }
+
+  public isRateLimited(): boolean {
+    return this.status === 429;
+  }
+
+  public isServerError(): boolean {
+    return this.status >= 500;
+  }
+
+  /**
+   * Returns a map of field names to error messages for easy form binding.
+   */
+  public getFieldErrors(): Record<string, string[]> {
+    const fieldMap: Record<string, string[]> = {};
+
+    if (this.details && this.details.length > 0) {
+      for (const detail of this.details) {
+        const key = detail.field || '_general';
+        if (!fieldMap[key]) {
+          fieldMap[key] = [];
+        }
+        fieldMap[key].push(detail.message);
+      }
+    }
+
+    return fieldMap;
   }
 }
 
 export interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
   token?: string | null;
+  correlationId?: string;
 }
 
 /**
@@ -38,7 +116,7 @@ export class ApiClient {
   }
 
   /**
-   * Set authentication token for subsequent requests (used when auth is introduced).
+   * Set authentication token for subsequent requests.
    */
   public setAuthToken(token: string | null): void {
     this.authToken = token;
@@ -76,13 +154,17 @@ export class ApiClient {
    * Core request dispatcher.
    */
   public async request<T = unknown>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const { params, token, headers = {}, ...customConfig } = options;
+    const { params, token, correlationId, headers = {}, ...customConfig } = options;
 
     const requestHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
       ...(headers as Record<string, string>),
     };
+
+    if (correlationId) {
+      requestHeaders['x-correlation-id'] = correlationId;
+    }
 
     const effectiveToken = token !== undefined ? token : this.authToken;
     if (effectiveToken) {
@@ -110,6 +192,13 @@ export class ApiClient {
 
       if (!response.ok) {
         let errorMessage = `API request failed with status ${response.status}`;
+        let errorCode: string | undefined = undefined;
+        let correlationIdFromRes: string | undefined =
+          response.headers.get('x-correlation-id') || undefined;
+        let details: ApiErrorDetail[] | undefined = undefined;
+        let timestamp: string | undefined = undefined;
+        let path: string | undefined = undefined;
+
         if (isJson && parsedBody && typeof parsedBody === 'object') {
           const errorPayload = parsedBody as ApiErrorResponse;
           if (Array.isArray(errorPayload.message)) {
@@ -117,8 +206,21 @@ export class ApiClient {
           } else if (errorPayload.message) {
             errorMessage = errorPayload.message;
           }
+
+          errorCode = errorPayload.errorCode as string | undefined;
+          correlationIdFromRes = errorPayload.correlationId || correlationIdFromRes;
+          details = errorPayload.details;
+          timestamp = errorPayload.timestamp;
+          path = errorPayload.path;
         }
-        throw new ApiClientError(errorMessage, response.status, parsedBody);
+
+        throw new ApiClientError(errorMessage, response.status, parsedBody, {
+          errorCode,
+          correlationId: correlationIdFromRes,
+          details,
+          timestamp,
+          path,
+        });
       }
 
       return parsedBody as T;
@@ -166,6 +268,24 @@ export class ApiClient {
 
   public delete<T = unknown>(endpoint: string, options?: RequestOptions): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
+  }
+
+  /**
+   * Helper to unwrap the data field from an ApiResponse envelope.
+   */
+  public async unwrap<T>(promise: Promise<ApiResponse<T>>): Promise<T> {
+    const response = await promise;
+    return response.data;
+  }
+
+  /**
+   * Type-safe convenience method for paginated query endpoints.
+   */
+  public getPaginated<T>(
+    endpoint: string,
+    options?: RequestOptions,
+  ): Promise<PaginatedResponse<T>> {
+    return this.get<PaginatedResponse<T>>(endpoint, options);
   }
 }
 

@@ -7,9 +7,32 @@ import {
   DependencyStatusMap,
 } from '@merqent/shared-types';
 
+export class ApiErrorDetailDto {
+  @ApiPropertyOptional({ example: 'email', description: 'Affected property path' })
+  field?: string;
+
+  @ApiProperty({
+    example: 'Must be a valid email address',
+    description: 'Constraint violation description',
+  })
+  message!: string;
+
+  @ApiPropertyOptional({
+    example: 'isEmail',
+    description: 'Machine-readable rule or constraint identifier',
+  })
+  code?: string;
+}
+
 export class ErrorResponseDto implements ApiErrorResponse {
   @ApiProperty({ example: 400, description: 'HTTP status code' })
   statusCode!: number;
+
+  @ApiPropertyOptional({
+    example: 'VALIDATION_ERROR',
+    description: 'Stable machine-readable error code',
+  })
+  errorCode?: string;
 
   @ApiProperty({ example: '2026-10-08T16:20:00.000Z', description: 'ISO timestamp of occurrence' })
   timestamp!: string;
@@ -31,6 +54,12 @@ export class ErrorResponseDto implements ApiErrorResponse {
 
   @ApiProperty({ example: 'Bad Request', description: 'Error classification category' })
   error!: string;
+
+  @ApiPropertyOptional({
+    type: [ApiErrorDetailDto],
+    description: 'Granular constraint details for validation errors',
+  })
+  details?: ApiErrorDetailDto[];
 }
 
 export class DatabaseDependencyStatusDto implements DatabaseHealthStatus {
@@ -81,4 +110,10 @@ export class PaginationMetaDto implements PaginationMeta {
 
   @ApiProperty({ example: 5, description: 'Total number of pages' })
   totalPages!: number;
+
+  @ApiPropertyOptional({ example: true, description: 'Whether next page exists' })
+  hasNextPage?: boolean;
+
+  @ApiPropertyOptional({ example: false, description: 'Whether previous page exists' })
+  hasPreviousPage?: boolean;
 }

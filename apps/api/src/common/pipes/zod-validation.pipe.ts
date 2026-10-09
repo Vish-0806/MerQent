@@ -1,5 +1,6 @@
 import { PipeTransform, ArgumentMetadata, BadRequestException } from '@nestjs/common';
 import { ZodSchema, ZodError } from 'zod';
+import { ErrorCode, ApiErrorDetail } from '@merqent/shared-types';
 
 export class ZodValidationPipe implements PipeTransform {
   constructor(private readonly schema: ZodSchema) {}
@@ -9,13 +10,28 @@ export class ZodValidationPipe implements PipeTransform {
       return this.schema.parse(value);
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessages = error.errors.map((e) => {
-          const path = e.path.join('.');
-          return path ? `${path}: ${e.message}` : e.message;
+        const details: ApiErrorDetail[] = error.errors.map((e) => ({
+          field: e.path.join('.') || undefined,
+          message: e.message,
+          code: e.code,
+        }));
+
+        const errorMessages = details.map((d) =>
+          d.field ? `${d.field}: ${d.message}` : d.message,
+        );
+
+        throw new BadRequestException({
+          message: errorMessages,
+          errorCode: ErrorCode.VALIDATION_ERROR,
+          error: 'Bad Request',
+          details,
         });
-        throw new BadRequestException(errorMessages);
       }
-      throw new BadRequestException('Validation failed');
+      throw new BadRequestException({
+        message: 'Validation failed',
+        errorCode: ErrorCode.VALIDATION_ERROR,
+        error: 'Bad Request',
+      });
     }
   }
 }

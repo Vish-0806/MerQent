@@ -3,7 +3,7 @@ import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { TransformInterceptor } from './transform.interceptor';
 
-describe('TransformInterceptor (Task 2.4)', () => {
+describe('TransformInterceptor (Task 2.10)', () => {
   let interceptor: TransformInterceptor<unknown>;
   let mockReflector: Partial<Reflector>;
   let mockContext: ExecutionContext;
@@ -21,7 +21,7 @@ describe('TransformInterceptor (Task 2.4)', () => {
     } as unknown as ExecutionContext;
   });
 
-  it('wraps raw response payload into { data: payload }', async () => {
+  it('wraps raw response payload into standardized { data: payload, timestamp } envelope', async () => {
     mockHandler = {
       handle: () => of({ id: 'consultant-123', name: 'Operator A' }),
     };
@@ -31,13 +31,15 @@ describe('TransformInterceptor (Task 2.4)', () => {
 
     expect(result).toEqual({
       data: { id: 'consultant-123', name: 'Operator A' },
+      timestamp: expect.any(String),
     });
   });
 
-  it('preserves response when already formatted with data and meta properties', async () => {
+  it('preserves response when already formatted with data, meta, and attaches timestamp', async () => {
     const existingEnvelope = {
       data: [{ id: 'proj-1' }],
-      meta: { total: 1, page: 1 },
+      meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
+      message: 'Projects retrieved successfully',
     };
     mockHandler = {
       handle: () => of(existingEnvelope),
@@ -46,7 +48,10 @@ describe('TransformInterceptor (Task 2.4)', () => {
     const stream$ = interceptor.intercept(mockContext, mockHandler);
     const result = await firstValueFrom(stream$);
 
-    expect(result).toEqual(existingEnvelope);
+    expect(result).toEqual({
+      ...existingEnvelope,
+      timestamp: expect.any(String),
+    });
   });
 
   it('bypasses wrapping when handler is decorated with @BypassTransform', async () => {

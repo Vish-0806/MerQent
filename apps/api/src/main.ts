@@ -9,6 +9,7 @@ import { AppLogger } from './infrastructure/observability/logger.service';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { ErrorCode, ApiErrorDetail } from '@merqent/shared-types';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -61,21 +62,31 @@ async function bootstrap() {
         enableImplicitConversion: true,
       },
       exceptionFactory: (validationErrors) => {
-        const formatErrors = (errors: typeof validationErrors): string[] => {
-          const messages: string[] = [];
+        const details: ApiErrorDetail[] = [];
+        const formatErrors = (errors: typeof validationErrors, parentPath = ''): void => {
           for (const err of errors) {
+            const field = parentPath ? `${parentPath}.${err.property}` : err.property;
             if (err.constraints) {
-              messages.push(...Object.values(err.constraints));
+              for (const [code, message] of Object.entries(err.constraints)) {
+                details.push({ field, message, code });
+              }
             }
             if (err.children && err.children.length > 0) {
-              messages.push(...formatErrors(err.children));
+              formatErrors(err.children, field);
             }
           }
-          return messages;
         };
 
-        const errorMessages = formatErrors(validationErrors);
-        return new BadRequestException(errorMessages);
+        formatErrors(validationErrors);
+        const errorMessages = details.map((d) =>
+          d.field ? `${d.field}: ${d.message}` : d.message,
+        );
+        return new BadRequestException({
+          message: errorMessages,
+          errorCode: ErrorCode.VALIDATION_ERROR,
+          error: 'Bad Request',
+          details,
+        });
       },
     }),
   );
