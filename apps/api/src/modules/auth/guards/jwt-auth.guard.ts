@@ -12,6 +12,9 @@ import { IS_PUBLIC_KEY } from '../../../common/decorators/public.decorator';
 import { RedisService } from '../../../infrastructure/redis/redis.service';
 import { JwtAccessPayload } from '../interfaces/token-payload.interface';
 
+import { Optional } from '@nestjs/common';
+import { RequestContextService } from '../../../common/context/request-context.service';
+
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   private readonly logger = new Logger(JwtAuthGuard.name);
@@ -20,7 +23,10 @@ export class JwtAuthGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    @Optional()
     private readonly redisService?: RedisService,
+    @Optional()
+    private readonly requestContextService?: RequestContextService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -70,6 +76,10 @@ export class JwtAuthGuard implements CanActivate {
         firmId: payload.firmId,
         consultantProfileId: payload.consultantProfileId,
       };
+
+      if (this.requestContextService) {
+        this.requestContextService.setUser(request.user);
+      }
 
       return true;
     } catch (err: unknown) {

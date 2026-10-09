@@ -1,0 +1,66 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+/**
+ * Strongly typed wrapper around NestJS ConfigService.
+ */
+@Injectable()
+export class AppConfigService {
+  constructor(private readonly config: ConfigService) {}
+
+  get isProduction(): boolean {
+    return this.config.get<string>('nodeEnv') === 'production';
+  }
+
+  get isDevelopment(): boolean {
+    return this.config.get<string>('nodeEnv') === 'development';
+  }
+
+  get isTest(): boolean {
+    return this.config.get<string>('nodeEnv') === 'test';
+  }
+
+  get port(): number {
+    return this.config.get<number>('port', 4000);
+  }
+
+  get apiBaseUrl(): string {
+    return this.config.get<string>('apiBaseUrl', 'http://localhost:4000');
+  }
+
+  get webAppUrl(): string {
+    return this.config.get<string>('webAppUrl', 'http://localhost:3000');
+  }
+
+  get jwtSecret(): string {
+    return this.config.get<string>('jwt.secret', '');
+  }
+
+  get jwtExpiresIn(): string {
+    return this.config.get<string>('jwt.expiresIn', '15m');
+  }
+
+  get refreshSecret(): string {
+    return this.config.get<string>('jwt.refreshSecret', '');
+  }
+
+  get refreshExpiresIn(): string {
+    return this.config.get<string>('jwt.refreshExpiresIn', '7d');
+  }
+
+  get redisHost(): string {
+    return this.config.get<string>('redis.host', 'localhost');
+  }
+
+  get redisPort(): number {
+    return this.config.get<number>('redis.port', 6379);
+  }
+
+  get databaseUrl(): string {
+    return this.config.get<string>('database.url', '');
+  }
+
+  get corsOrigins(): string | string[] {
+    return this.config.get<string | string[]>('cors.origins', ['http://localhost:3000']);
+  }
+}

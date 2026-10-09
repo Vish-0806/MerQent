@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import configuration from '../config/configuration';
 import { AppController } from './app.controller';
 import { CorrelationIdMiddleware } from '../common/middleware/correlation-id.middleware';
+import { CommonModule } from '../common/common.module';
 
 // Infrastructure Modules
 import { DatabaseModule } from '../infrastructure/database/database.module';
@@ -40,6 +41,7 @@ import { AuditModule } from '../modules/audit/audit.module';
       isGlobal: true,
       load: [configuration],
     }),
+    CommonModule,
     DatabaseModule,
     RedisModule,
     ObservabilityModule,
