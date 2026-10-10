@@ -133,5 +133,22 @@ describe('AppController Health Probes (Task 2.12)', () => {
       expect(result.dependencies.database.status).toBe('disconnected');
       expect(mockRes.status).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
     });
+
+    it('should return not_ready and set 503 HTTP status when storage is disconnected', async () => {
+      (mockStorage.checkHealth as jest.Mock).mockResolvedValueOnce({
+        status: 'disconnected',
+        error: 'Connection refused',
+      });
+
+      const mockRes = {
+        status: jest.fn(),
+      } as unknown as Response;
+
+      const result = await appController.checkReadiness(mockRes);
+
+      expect(result.status).toBe('not_ready');
+      expect(result.dependencies.storage?.status).toBe('disconnected');
+      expect(mockRes.status).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
+    });
   });
 });

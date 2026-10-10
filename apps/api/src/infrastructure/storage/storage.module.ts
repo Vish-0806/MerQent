@@ -1,42 +1,27 @@
 import { Module } from '@nestjs/common';
-import {
-  STORAGE_SERVICE_TOKEN,
-  IStorageService,
-  PresignUploadRequest,
-  PresignUploadResponse,
-} from './storage.interface';
-
-class SandboxStorageService implements IStorageService {
-  async getPresignedUploadUrl(request: PresignUploadRequest): Promise<PresignUploadResponse> {
-    const fileKey = `${request.folder}/${Date.now()}-${request.filename}`;
-    return {
-      uploadUrl: `http://localhost:9000/merqent-dev-documents/${fileKey}?signature=mock_presigned_url`,
-      fileKey,
-      expiresInSeconds: 900,
-    };
-  }
-
-  async getPresignedDownloadUrl(fileKey: string, _expiresInSeconds = 900): Promise<string> {
-    return `http://localhost:9000/merqent-dev-documents/${fileKey}?signature=mock_download_url`;
-  }
-
-  async deleteFile(_fileKey: string): Promise<void> {}
-
-  async checkHealth() {
-    return {
-      status: 'connected' as const,
-      latencyMs: 1,
-    };
-  }
-}
+import { STORAGE_SERVICE_TOKEN } from './storage.interface';
+import { S3StorageService } from './s3-storage.service';
+import { MALWARE_SCANNER_TOKEN } from './malware/malware-scanner.interface';
+import { BoundaryMalwareScannerService } from './malware/boundary-malware-scanner.service';
 
 @Module({
   providers: [
+    S3StorageService,
     {
       provide: STORAGE_SERVICE_TOKEN,
-      useClass: SandboxStorageService,
+      useClass: S3StorageService,
+    },
+    BoundaryMalwareScannerService,
+    {
+      provide: MALWARE_SCANNER_TOKEN,
+      useClass: BoundaryMalwareScannerService,
     },
   ],
-  exports: [STORAGE_SERVICE_TOKEN],
+  exports: [
+    STORAGE_SERVICE_TOKEN,
+    S3StorageService,
+    MALWARE_SCANNER_TOKEN,
+    BoundaryMalwareScannerService,
+  ],
 })
 export class StorageModule {}

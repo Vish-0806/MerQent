@@ -71,4 +71,32 @@ export class AppConfigService {
   get corsOrigins(): string | string[] {
     return this.config.get<string | string[]>('cors.origins', ['http://localhost:3000']);
   }
+
+  get storageDriver(): string {
+    return this.config.get<string>('storage.driver', 's3');
+  }
+
+  get storageEndpoint(): string {
+    return this.config.get<string>('storage.endpoint', 'http://localhost:9000');
+  }
+
+  get storageRegion(): string {
+    return this.config.get<string>('storage.region', 'us-east-1');
+  }
+
+  get storageBucket(): string {
+    return this.config.get<string>('storage.bucket', 'merqent-secure-documents');
+  }
+
+  get storageAccessKeyId(): string {
+    return this.config.get<string>('storage.accessKeyId', 'minioadmin');
+  }
+
+  get storageSecretAccessKey(): string {
+    return this.config.get<string>('storage.secretAccessKey', 'minioadmin');
+  }
+
+  get storageSignedUrlExpirySeconds(): number {
+    return this.config.get<number>('storage.signedUrlExpirySeconds', 900);
+  }
 }

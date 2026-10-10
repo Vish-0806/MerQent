@@ -313,6 +313,15 @@ export enum ErrorCode {
   // Rate Limiting & Networking
   RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
   SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
+
+  // Storage & File Operations
+  FILE_TOO_LARGE = 'FILE_TOO_LARGE',
+  INVALID_FILE_TYPE = 'INVALID_FILE_TYPE',
+  FILE_NOT_FOUND = 'FILE_NOT_FOUND',
+  FILE_ACCESS_DENIED = 'FILE_ACCESS_DENIED',
+  FILE_SCAN_FAILED = 'FILE_SCAN_FAILED',
+  MALWARE_DETECTED = 'MALWARE_DETECTED',
+  STORAGE_ERROR = 'STORAGE_ERROR',
 }
 
 export interface ApiResponse<T = unknown> {
@@ -470,4 +479,53 @@ export interface TimestampFields {
 export interface DateRangeParams {
   startDate?: string | Date;
   endDate?: string | Date;
+}
+
+// ============================================================================
+// 6. File & Storage Domain Types
+// ============================================================================
+
+export interface FileRecordDto {
+  id: string;
+  storageKey: string;
+  originalFileName: string;
+  mimeType: string;
+  fileSizeBytes: number;
+  checksumSha256: string;
+  scanStatus: FileScanStatus;
+  ownerUserId: string;
+  createdAt: string;
+}
+
+export interface PresignUploadRequestDto {
+  originalFileName: string;
+  mimeType: string;
+  fileSizeBytes: number;
+  checksumSha256?: string;
+  folder?: string;
+}
+
+export interface PresignUploadResponseDto {
+  fileRecordId: string;
+  uploadUrl: string;
+  storageKey: string;
+  expiresInSeconds: number;
+}
+
+export interface ConfirmUploadRequestDto {
+  fileRecordId: string;
+  checksumSha256?: string;
+}
+
+export interface PresignDownloadResponseDto {
+  downloadUrl: string;
+  expiresInSeconds: number;
+  fileRecord: FileRecordDto;
+}
+
+export interface StorageObjectMetadata {
+  contentLength: number;
+  contentType?: string;
+  etag?: string;
+  lastModified?: Date;
 }

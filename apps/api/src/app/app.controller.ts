@@ -144,12 +144,20 @@ export class AppController {
       redisStatus = await this.redis.checkHealth();
     }
 
+    let storageStatus: StorageHealthStatus | undefined;
+    if (this.storage?.checkHealth) {
+      storageStatus = await this.storage.checkHealth();
+    }
+
     const isReady =
-      dbStatus.status === 'connected' && (!redisStatus || redisStatus.status === 'connected');
+      dbStatus.status === 'connected' &&
+      (!redisStatus || redisStatus.status === 'connected') &&
+      (!storageStatus || storageStatus.status === 'connected');
 
     const dependencies: DependencyStatusMap = {
       database: dbStatus,
       ...(redisStatus ? { redis: redisStatus } : {}),
+      ...(storageStatus ? { storage: storageStatus } : {}),
     };
 
     if (!isReady && res) {

@@ -87,7 +87,34 @@ export const UpdateConsultantProfileSchema = z.object({
 });
 
 // ============================================================================
-// 4. Inferred TypeScript Types
+// 4. File & Storage Schemas
+// ============================================================================
+
+export const PresignUploadSchema = z.object({
+  originalFileName: z.string().min(1, 'File name is required').max(255),
+  mimeType: z.string().min(3, 'MIME type is required').max(100),
+  fileSizeBytes: z
+    .number()
+    .int()
+    .min(1, 'File size must be greater than 0 bytes')
+    .max(26214400, 'File size cannot exceed 25MB'),
+  checksumSha256: z
+    .string()
+    .regex(/^[a-fA-F0-9]{64}$/, 'Must be a valid 64-character SHA-256 hex string')
+    .optional(),
+  folder: z.string().max(100).optional(),
+});
+
+export const ConfirmUploadSchema = z.object({
+  fileRecordId: z.string().uuid('Invalid file record UUID'),
+  checksumSha256: z
+    .string()
+    .regex(/^[a-fA-F0-9]{64}$/, 'Must be a valid 64-character SHA-256 hex string')
+    .optional(),
+});
+
+// ============================================================================
+// 5. Inferred TypeScript Types
 // ============================================================================
 
 export type IdParamInput = z.infer<typeof IdParamSchema>;
@@ -99,3 +126,5 @@ export type RegisterUserInput = z.infer<typeof RegisterUserSchema>;
 export type LoginUserInput = z.infer<typeof LoginUserSchema>;
 export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
 export type UpdateConsultantProfileInput = z.infer<typeof UpdateConsultantProfileSchema>;
+export type PresignUploadInput = z.infer<typeof PresignUploadSchema>;
+export type ConfirmUploadInput = z.infer<typeof ConfirmUploadSchema>;
