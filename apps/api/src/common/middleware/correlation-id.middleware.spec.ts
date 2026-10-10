@@ -78,6 +78,25 @@ describe('CorrelationIdMiddleware (Task 2.11: Common Infrastructure)', () => {
     expect(capturedIp).toBe('203.0.113.195');
   });
 
+  it('ignores forged x-forwarded-for headers when trust proxy is disabled (false)', () => {
+    (mockRequest as unknown as { app: { get: jest.Mock } }).app = {
+      get: jest.fn().mockReturnValue(false),
+    };
+    mockRequest.headers = {
+      'x-forwarded-for': '203.0.113.195, 70.41.3.18',
+    };
+    Object.defineProperty(mockRequest, 'ip', { value: '198.51.100.99', configurable: true });
+
+    let capturedIp: string | undefined;
+    nextFn.mockImplementation(() => {
+      capturedIp = requestContextService.getContext()?.ip;
+    });
+
+    middleware.use(mockRequest as RequestWithCorrelation, mockResponse as Response, nextFn);
+
+    expect(capturedIp).toBe('198.51.100.99');
+  });
+
   it('functions gracefully without RequestContextService instance', () => {
     const standaloneMiddleware = new CorrelationIdMiddleware();
 

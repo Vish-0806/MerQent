@@ -23,6 +23,10 @@ export interface AppConfiguration {
     port: number;
     password?: string;
   };
+  rateLimit: {
+    redisFailClosed: boolean;
+  };
+  trustProxy: string;
   storage: {
     driver: string;
     endpoint: string;
@@ -78,6 +82,10 @@ export default (): AppConfiguration => {
       port: env.REDIS_PORT,
       password: env.REDIS_PASSWORD || undefined,
     },
+    rateLimit: {
+      redisFailClosed: env.RATE_LIMIT_REDIS_FAIL_CLOSED,
+    },
+    trustProxy: env.TRUST_PROXY,
     storage: {
       driver: env.STORAGE_DRIVER,
       endpoint: env.STORAGE_ENDPOINT,

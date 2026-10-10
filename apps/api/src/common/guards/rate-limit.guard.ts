@@ -46,6 +46,9 @@ export class RateLimitGuard implements CanActivate {
       res.setHeader('X-RateLimit-Limit', String(result.limit));
       res.setHeader('X-RateLimit-Remaining', String(result.remaining));
       res.setHeader('X-RateLimit-Reset', String(result.resetTime));
+      if (result.degraded) {
+        res.setHeader('X-RateLimit-Degraded', 'true');
+      }
     }
 
     if (!result.allowed) {
@@ -69,16 +72,10 @@ export class RateLimitGuard implements CanActivate {
   }
 
   private getClientIp(req: Request): string {
-    const forwardedFor = req.headers['x-forwarded-for'];
-    if (Array.isArray(forwardedFor) && forwardedFor[0]) {
-      return forwardedFor[0].trim();
-    }
-    if (typeof forwardedFor === 'string' && forwardedFor.length > 0) {
-      const parts = forwardedFor.split(',');
-      if (parts[0]) {
-        return parts[0].trim();
-      }
-    }
+    // Strictly rely on Express trusted proxy resolution.
+    // When trust proxy is disabled, req.ip returns direct socket connection remoteAddress,
+    // completely ignoring forged X-Forwarded-For headers from untrusted clients.
+    // When trust proxy is configured, Express traverses the hop chain securely against the trust policy.
     return req.ip || req.socket?.remoteAddress || '127.0.0.1';
   }
 }

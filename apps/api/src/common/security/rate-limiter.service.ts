@@ -1,5 +1,7 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Injectable, Logger, Optional, HttpException, HttpStatus } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { RedisService } from '../../infrastructure/redis/redis.service';
+import { ErrorCode } from '@merqent/shared-types';
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -7,6 +9,7 @@ export interface RateLimitResult {
   remaining: number;
   retryAfterSeconds: number;
   resetTime: number; // Unix epoch seconds
+  degraded?: boolean; // Set to true when Redis was unavailable and local memory was used
 }
 
 interface InMemoryRecord {
@@ -23,7 +26,10 @@ export class RateLimiterService {
   private readonly logger = new Logger(RateLimiterService.name);
   private readonly inMemoryCache = new Map<string, InMemoryRecord>();
 
-  constructor(@Optional() private readonly redisService?: RedisService) {}
+  constructor(
+    @Optional() private readonly redisService?: RedisService,
+    @Optional() private readonly configService?: ConfigService,
+  ) {}
 
   /**
    * Consume a rate limit unit against the given key.
@@ -57,6 +63,7 @@ export class RateLimiterService {
               remaining: 0,
               retryAfterSeconds: effectiveTtl,
               resetTime,
+              degraded: false,
             };
           }
 
@@ -66,13 +73,41 @@ export class RateLimiterService {
             remaining: Math.max(0, limit - current),
             retryAfterSeconds: 0,
             resetTime,
+            degraded: false,
           };
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        this.logger.warn(`Redis rate limiting failed, falling back to memory: ${msg}`);
+        this.logger.error(
+          `SECURITY ALERT: Redis rate limiter command failed: ${msg}. Evaluating failure policy.`,
+        );
       }
     }
+
+    // Evaluate Redis failure policy when Redis is offline or failed
+    const failClosed =
+      this.configService?.get<boolean>('rateLimit.redisFailClosed', false) ?? false;
+
+    if (failClosed) {
+      this.logger.error(
+        `SECURITY ALERT: Redis rate limiter unavailable under fail-closed policy. Rejecting request for key: ${key}`,
+      );
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+          errorCode: ErrorCode.SERVICE_UNAVAILABLE,
+          error: 'Service Unavailable',
+          message:
+            'Authentication rate limiter is temporarily unavailable. Please try again shortly.',
+        },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    // Explicit security warning for degraded in-memory mode
+    this.logger.warn(
+      `SECURITY WARNING: Redis rate limiter unavailable. Operating in degraded in-memory mode per node instance. Distributed rate limiting is not enforced across multiple replicas!`,
+    );
 
     // In-memory fallback
     this.cleanExpiredMemoryEntries(nowMs);
@@ -90,6 +125,7 @@ export class RateLimiterService {
         remaining: limit - 1,
         retryAfterSeconds: 0,
         resetTime: Math.ceil(record.expiresAt / 1000),
+        degraded: true,
       };
     }
 
@@ -104,6 +140,7 @@ export class RateLimiterService {
         remaining: 0,
         retryAfterSeconds: Math.max(1, retryAfter),
         resetTime,
+        degraded: true,
       };
     }
 
@@ -113,6 +150,7 @@ export class RateLimiterService {
       remaining: limit - record.count,
       retryAfterSeconds: 0,
       resetTime,
+      degraded: true,
     };
   }
 

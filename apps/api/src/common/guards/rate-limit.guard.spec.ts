@@ -86,7 +86,7 @@ describe('RateLimitGuard', () => {
     expect(headers['x-ratelimit-reset']).toBe('1700000060');
   });
 
-  it('should extract client IP from x-forwarded-for if present', async () => {
+  it('should use Express resolved req.ip for direct client requests', async () => {
     reflector.getAllAndOverride.mockReturnValue({
       limit: 5,
       ttlSeconds: 60,
@@ -101,11 +101,58 @@ describe('RateLimitGuard', () => {
       resetTime: 1700000060,
     });
 
-    const { context } = createMockContext('127.0.0.1', '203.0.113.195, 70.41.3.18');
+    const { context } = createMockContext('198.51.100.5');
 
     await guard.canActivate(context);
 
-    expect(rateLimiterService.consume).toHaveBeenCalledWith('auth:203.0.113.195', 5, 60);
+    expect(rateLimiterService.consume).toHaveBeenCalledWith('auth:198.51.100.5', 5, 60);
+  });
+
+  it('should prevent IP spoofing by ignoring forged x-forwarded-for on direct clients and honoring req.ip', async () => {
+    reflector.getAllAndOverride.mockReturnValue({
+      limit: 5,
+      ttlSeconds: 60,
+      keyPrefix: 'auth',
+    });
+
+    rateLimiterService.consume.mockResolvedValue({
+      allowed: true,
+      limit: 5,
+      remaining: 4,
+      retryAfterSeconds: 0,
+      resetTime: 1700000060,
+    });
+
+    // An attacker sends a forged x-forwarded-for header, but Express has resolved their real socket/proxy IP as req.ip
+    const { context } = createMockContext('198.51.100.5', '10.0.0.99, 172.16.0.1');
+
+    await guard.canActivate(context);
+
+    // Guard rate-limits the authoritative req.ip, NOT the forged leftmost header value
+    expect(rateLimiterService.consume).toHaveBeenCalledWith('auth:198.51.100.5', 5, 60);
+  });
+
+  it('should set X-RateLimit-Degraded header when rate limiter is in degraded mode', async () => {
+    reflector.getAllAndOverride.mockReturnValue({
+      limit: 5,
+      ttlSeconds: 60,
+      keyPrefix: 'auth',
+    });
+
+    rateLimiterService.consume.mockResolvedValue({
+      allowed: true,
+      limit: 5,
+      remaining: 4,
+      retryAfterSeconds: 0,
+      resetTime: 1700000060,
+      degraded: true,
+    });
+
+    const { context, headers } = createMockContext('198.51.100.5');
+
+    await guard.canActivate(context);
+
+    expect(headers['x-ratelimit-degraded']).toBe('true');
   });
 
   it('should throw 429 HttpException with standard error structure when rate limit exceeded', async () => {

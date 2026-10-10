@@ -25,6 +25,31 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('port', 4000);
+
+  // Configure trusted deployment proxies for secure forwarded-IP extraction
+  const rawTrustProxy = configService.get<string | boolean | number>('trustProxy', 'false');
+  let trustProxySetting: boolean | number | string = false;
+  if (rawTrustProxy === true || rawTrustProxy === 'true') {
+    trustProxySetting = true;
+  } else if (rawTrustProxy === false || rawTrustProxy === 'false') {
+    trustProxySetting = false;
+  } else if (!isNaN(Number(rawTrustProxy))) {
+    trustProxySetting = Number(rawTrustProxy);
+  } else if (typeof rawTrustProxy === 'string') {
+    trustProxySetting = rawTrustProxy;
+  }
+  const httpAdapter = app.getHttpAdapter();
+  if (
+    httpAdapter &&
+    typeof (httpAdapter.getInstance() as { set?: (...args: unknown[]) => void })?.set === 'function'
+  ) {
+    (httpAdapter.getInstance() as { set: (...args: unknown[]) => void }).set(
+      'trust proxy',
+      trustProxySetting,
+    );
+    logger.log(`🛡️ Trusted proxy configuration set to: ${String(trustProxySetting)}`);
+  }
+
   // Parse allowed origins into normalized array
   const rawCorsOrigins = configService.get<string | string[]>('cors.origins', [
     'http://localhost:3000',

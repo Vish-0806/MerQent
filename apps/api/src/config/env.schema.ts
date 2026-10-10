@@ -26,6 +26,10 @@ export const envConfigSchema = z.object({
   REDIS_HOST: z.string().min(1).default('localhost'),
   REDIS_PORT: z.coerce.number().int().min(1).max(65535).default(6379),
   REDIS_PASSWORD: z.string().optional().default(''),
+  RATE_LIMIT_REDIS_FAIL_CLOSED: z.coerce.boolean().default(false),
+
+  // Deployment & Proxy Trust
+  TRUST_PROXY: z.string().default('false'),
 
   // Authentication & Session Security
   JWT_ACCESS_SECRET: z

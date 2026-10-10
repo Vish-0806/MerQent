@@ -24,17 +24,26 @@ export class CorrelationIdMiddleware implements NestMiddleware {
     res.setHeader('x-correlation-id', correlationId);
 
     if (this.requestContextService) {
-      const forwardedFor = req.headers['x-forwarded-for'];
+      // Evaluate Express trusted proxy configuration to prevent header forgery
+      const trustProxy =
+        req.app && typeof req.app.get === 'function' ? req.app.get('trust proxy') : undefined;
+
       let clientIp: string | undefined;
 
-      if (Array.isArray(forwardedFor) && forwardedFor.length > 0) {
-        clientIp = forwardedFor[0];
-      } else if (typeof forwardedFor === 'string' && forwardedFor.length > 0) {
-        clientIp = forwardedFor.split(',')[0]?.trim();
-      }
-
-      if (!clientIp) {
+      // When trust proxy is explicitly disabled, strictly use socket/direct IP and ignore forged headers
+      if (trustProxy === false) {
         clientIp = req.ip || req.socket?.remoteAddress || '127.0.0.1';
+      } else {
+        const forwardedFor = req.headers['x-forwarded-for'];
+        if (Array.isArray(forwardedFor) && forwardedFor.length > 0) {
+          clientIp = forwardedFor[0];
+        } else if (typeof forwardedFor === 'string' && forwardedFor.length > 0) {
+          clientIp = forwardedFor.split(',')[0]?.trim();
+        }
+
+        if (!clientIp) {
+          clientIp = req.ip || req.socket?.remoteAddress || '127.0.0.1';
+        }
       }
 
       const userAgentHeader = req.headers['user-agent'];
