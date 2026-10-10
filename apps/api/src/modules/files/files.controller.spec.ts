@@ -104,9 +104,14 @@ describe('FilesController (Task 2.14)', () => {
     expect(mockFilesService.deleteFile).toHaveBeenCalledWith(mockUser, 'file-123');
   });
 
-  it('should cleanup abandoned uploads', async () => {
-    const res = await controller.cleanupAbandoned(24);
+  it('should cleanup abandoned uploads when invoked by platform admin', async () => {
+    const adminUser: UserContext = {
+      id: 'admin-1',
+      email: 'admin@merqent.com',
+      role: UserRole.PLATFORM_ADMIN,
+    };
+    const res = await controller.cleanupAbandoned(adminUser, 24);
     expect(res.deletedCount).toBe(3);
-    expect(mockFilesService.cleanupAbandonedUploads).toHaveBeenCalledWith(24);
+    expect(mockFilesService.cleanupAbandonedUploads).toHaveBeenCalledWith(adminUser, 24);
   });
 });

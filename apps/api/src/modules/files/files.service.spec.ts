@@ -15,13 +15,14 @@ describe('FilesService (Task 2.14)', () => {
       findMany: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
+      deleteMany: jest.Mock;
     };
     firmMember: {
       findUnique: jest.Mock;
     };
   };
   let mockStorage: Partial<IStorageService>;
-  let mockMalwareScanner: Partial<IMalwareScanner>;
+  let mockMalwareScanner: { isLive: boolean; scan: jest.Mock };
   let mockRequestContext: Partial<RequestContextService>;
 
   const mockUser: UserContext = {
@@ -62,6 +63,7 @@ describe('FilesService (Task 2.14)', () => {
           .fn()
           .mockImplementation(({ data }) => Promise.resolve({ ...data, createdAt: new Date() })),
         delete: jest.fn().mockResolvedValue({}),
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
       firmMember: {
         findUnique: jest.fn(),
@@ -86,7 +88,7 @@ describe('FilesService (Task 2.14)', () => {
     };
 
     mockMalwareScanner = {
-      isLive: false,
+      isLive: true,
       scan: jest.fn().mockResolvedValue({
         isClean: true,
         status: FileScanStatus.CLEAN,
@@ -104,7 +106,7 @@ describe('FilesService (Task 2.14)', () => {
     filesService = new FilesService(
       mockPrisma as unknown as PrismaService,
       mockStorage as IStorageService,
-      mockMalwareScanner as IMalwareScanner,
+      mockMalwareScanner as unknown as IMalwareScanner,
       mockRequestContext as RequestContextService,
     );
   });
@@ -158,12 +160,22 @@ describe('FilesService (Task 2.14)', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should reject oversized uploads exceeding 25MB boundary', async () => {
+    it('should accept upload at exactly 25MB boundary (26214400 bytes)', async () => {
+      const result = await filesService.requestUpload(mockUser, {
+        originalFileName: 'boundary_archive.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 26214400,
+      });
+      expect(result).toBeDefined();
+      expect(result.fileRecordId).toBeDefined();
+    });
+
+    it('should reject upload exceeding 25MB boundary by 1 byte (26214401 bytes)', async () => {
       await expect(
         filesService.requestUpload(mockUser, {
           originalFileName: 'huge_archive.pdf',
           mimeType: 'application/pdf',
-          fileSizeBytes: 30 * 1024 * 1024, // 30MB
+          fileSizeBytes: 26214401,
         }),
       ).rejects.toThrow(BadRequestException);
     });
@@ -192,7 +204,7 @@ describe('FilesService (Task 2.14)', () => {
       createdAt: new Date(),
     };
 
-    it('should successfully confirm upload when S3 object exists and malware scan is clean', async () => {
+    it('should successfully confirm upload when S3 object exists and live malware scan is clean', async () => {
       mockPrisma.fileRecord.findUnique.mockResolvedValueOnce(existingFileRecord);
 
       const confirmed = await filesService.confirmUpload(mockUser, 'file-123');
@@ -206,6 +218,69 @@ describe('FilesService (Task 2.14)', () => {
           data: expect.objectContaining({ scanStatus: FileScanStatus.CLEAN }),
         }),
       );
+    });
+
+    it('should fail closed and keep file PENDING when scanner is inactive', async () => {
+      mockPrisma.fileRecord.findUnique.mockResolvedValueOnce(existingFileRecord);
+      mockMalwareScanner.isLive = false;
+
+      const result = await filesService.confirmUpload(mockUser, 'file-123');
+
+      expect(result.scanStatus).toBe(FileScanStatus.PENDING);
+      expect(mockMalwareScanner.scan).not.toHaveBeenCalled();
+      expect(mockPrisma.fileRecord.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'file-123' },
+          data: expect.objectContaining({ scanStatus: FileScanStatus.PENDING }),
+        }),
+      );
+    });
+
+    it('should fail closed and keep file PENDING when live scanner throws an error or times out', async () => {
+      mockPrisma.fileRecord.findUnique.mockResolvedValueOnce(existingFileRecord);
+      (mockMalwareScanner.scan as jest.Mock).mockRejectedValueOnce(
+        new Error('Scanner daemon connection timed out'),
+      );
+
+      const result = await filesService.confirmUpload(mockUser, 'file-123');
+
+      expect(result.scanStatus).toBe(FileScanStatus.PENDING);
+      expect(mockPrisma.fileRecord.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'file-123' },
+          data: expect.objectContaining({ scanStatus: FileScanStatus.PENDING }),
+        }),
+      );
+    });
+
+    it('should reject confirmation and safely clean up object and DB record if uploaded payload exceeds 25MB', async () => {
+      mockPrisma.fileRecord.findUnique.mockResolvedValueOnce(existingFileRecord);
+      (mockStorage.headObject as jest.Mock).mockResolvedValueOnce({
+        contentLength: 26214401, // 25MB + 1 byte
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      await expect(filesService.confirmUpload(mockUser, 'file-123')).rejects.toThrow(
+        BadRequestException,
+      );
+
+      expect(mockStorage.deleteFile).toHaveBeenCalledWith(existingFileRecord.storageKey);
+      expect(mockPrisma.fileRecord.delete).toHaveBeenCalledWith({ where: { id: 'file-123' } });
+    });
+
+    it('should reject confirmation and safely clean up if uploaded object is empty (0 bytes)', async () => {
+      mockPrisma.fileRecord.findUnique.mockResolvedValueOnce(existingFileRecord);
+      (mockStorage.headObject as jest.Mock).mockResolvedValueOnce({
+        contentLength: 0,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      await expect(filesService.confirmUpload(mockUser, 'file-123')).rejects.toThrow(
+        BadRequestException,
+      );
+
+      expect(mockStorage.deleteFile).toHaveBeenCalledWith(existingFileRecord.storageKey);
+      expect(mockPrisma.fileRecord.delete).toHaveBeenCalledWith({ where: { id: 'file-123' } });
     });
 
     it('should reject confirmation by another user who is not owner or platform admin', async () => {
@@ -267,7 +342,7 @@ describe('FilesService (Task 2.14)', () => {
       createdAt: new Date(),
     };
 
-    it('should allow file owner to obtain presigned download URL', async () => {
+    it('should allow file owner to obtain presigned download URL when scan is CLEAN', async () => {
       mockPrisma.fileRecord.findUnique.mockResolvedValueOnce(apolloFileRecord);
 
       const result = await filesService.getDownloadUrl(mockUser, 'file-apollo-1');
@@ -280,7 +355,31 @@ describe('FilesService (Task 2.14)', () => {
       );
     });
 
-    it('should allow member of the same firm tenant to obtain download URL', async () => {
+    it('should deny download request if file scan is still PENDING', async () => {
+      const pendingFile = {
+        ...apolloFileRecord,
+        scanStatus: FileScanStatus.PENDING,
+      };
+      mockPrisma.fileRecord.findUnique.mockResolvedValueOnce(pendingFile);
+
+      await expect(filesService.getDownloadUrl(mockUser, 'file-apollo-1')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should reject download request if file is quarantined as INFECTED', async () => {
+      const infectedFile = {
+        ...apolloFileRecord,
+        scanStatus: FileScanStatus.INFECTED,
+      };
+      mockPrisma.fileRecord.findUnique.mockResolvedValueOnce(infectedFile);
+
+      await expect(filesService.getDownloadUrl(mockUser, 'file-apollo-1')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should allow member of the same firm tenant to obtain download URL when CLEAN', async () => {
       mockPrisma.fileRecord.findUnique.mockResolvedValueOnce(apolloFileRecord);
 
       const colleagueUser: UserContext = {
@@ -303,23 +402,11 @@ describe('FilesService (Task 2.14)', () => {
       );
     });
 
-    it('should allow platform admin cross-tenant oversight', async () => {
+    it('should allow platform admin cross-tenant oversight for clean files', async () => {
       mockPrisma.fileRecord.findUnique.mockResolvedValueOnce(apolloFileRecord);
 
       const result = await filesService.getDownloadUrl(adminUser, 'file-apollo-1');
       expect(result.downloadUrl).toBeDefined();
-    });
-
-    it('should reject download request if file is quarantined as infected', async () => {
-      const infectedFile = {
-        ...apolloFileRecord,
-        scanStatus: FileScanStatus.INFECTED,
-      };
-      mockPrisma.fileRecord.findUnique.mockResolvedValueOnce(infectedFile);
-
-      await expect(filesService.getDownloadUrl(mockUser, 'file-apollo-1')).rejects.toThrow(
-        ForbiddenException,
-      );
     });
 
     it('should return 404 NotFound when file does not exist', async () => {
@@ -357,22 +444,59 @@ describe('FilesService (Task 2.14)', () => {
   });
 
   describe('cleanupAbandonedUploads', () => {
-    it('should delete expired unconfirmed pending records without touching other data', async () => {
-      const abandonedList = [
-        {
-          id: 'abandoned-1',
-          storageKey: 'tenants/firm-apollo-1/documents/abandoned-1/draft.pdf',
-          scanStatus: FileScanStatus.PENDING,
-        },
-      ];
+    const abandonedList = [
+      {
+        id: 'abandoned-1',
+        storageKey: 'tenants/firm-apollo-1/documents/abandoned-1/draft.pdf',
+        scanStatus: FileScanStatus.PENDING,
+      },
+    ];
 
+    it('should reject cleanup invocation by non-admin users', async () => {
+      await expect(filesService.cleanupAbandonedUploads(mockUser, 24)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should allow platform admin to delete expired unconfirmed pending records', async () => {
       mockPrisma.fileRecord.findMany.mockResolvedValueOnce(abandonedList);
+      mockPrisma.fileRecord.deleteMany.mockResolvedValueOnce({ count: 1 });
 
-      const result = await filesService.cleanupAbandonedUploads(24);
+      const result = await filesService.cleanupAbandonedUploads(adminUser, 24);
 
       expect(result.deletedCount).toBe(1);
+      expect(mockPrisma.fileRecord.deleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: 'abandoned-1',
+            scanStatus: FileScanStatus.PENDING,
+          }),
+        }),
+      );
       expect(mockStorage.deleteFile).toHaveBeenCalledWith(abandonedList[0]!.storageKey);
-      expect(mockPrisma.fileRecord.delete).toHaveBeenCalledWith({ where: { id: 'abandoned-1' } });
+    });
+
+    it('should protect against concurrent confirmation race condition (deleteMany count 0)', async () => {
+      mockPrisma.fileRecord.findMany.mockResolvedValueOnce(abandonedList);
+      // Simulate concurrent confirmation: scanStatus changed to CLEAN so deleteMany returns count 0
+      mockPrisma.fileRecord.deleteMany.mockResolvedValueOnce({ count: 0 });
+
+      const result = await filesService.cleanupAbandonedUploads(adminUser, 24);
+
+      expect(result.deletedCount).toBe(0);
+      expect(mockStorage.deleteFile).not.toHaveBeenCalled();
+    });
+
+    it('should handle storage delete failures gracefully during cleanup without crashing', async () => {
+      mockPrisma.fileRecord.findMany.mockResolvedValueOnce(abandonedList);
+      mockPrisma.fileRecord.deleteMany.mockResolvedValueOnce({ count: 1 });
+      (mockStorage.deleteFile as jest.Mock).mockRejectedValueOnce(
+        new Error('Object not found in S3'),
+      );
+
+      const result = await filesService.cleanupAbandonedUploads(adminUser, 24);
+
+      expect(result.deletedCount).toBe(1);
     });
   });
 });

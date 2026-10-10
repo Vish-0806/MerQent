@@ -154,9 +154,11 @@ export class FilesController {
     example: 24,
   })
   @ApiResponse({ status: 200, description: 'Cleanup executed' })
+  @ApiResponse({ status: 403, description: 'Forbidden: Insufficient permissions' })
   async cleanupAbandoned(
+    @CurrentUser() user: UserContext,
     @Query('maxAgeHours') maxAgeHours?: number,
   ): Promise<{ deletedCount: number }> {
-    return this.filesService.cleanupAbandonedUploads(maxAgeHours ? Number(maxAgeHours) : 24);
+    return this.filesService.cleanupAbandonedUploads(user, maxAgeHours ? Number(maxAgeHours) : 24);
   }
 }

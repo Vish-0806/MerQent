@@ -68,6 +68,15 @@ export class S3StorageService implements IStorageService {
   /**
    * Generates a short-lived presigned PUT URL for direct client-to-storage upload.
    * Credentials and bucket authorization remain strictly on the server.
+   *
+   * SECURITY & SIZE ENFORCEMENT NOTE:
+   * Binds ContentLength to the PutObjectCommand signature. Note that S3-compatible storage
+   * presigned PUT endpoints cannot reject an oversized HTTP stream at the storage boundary
+   * prior to receiving bytes unless the client includes the signed Content-Length header.
+   * To prevent denial-of-service and storage abuse, MerQent enforces a dual-control constraint:
+   * 1. Pre-upload: Server validates declared size <= 25MB before issuing presigned URLs.
+   * 2. Post-upload: Server executes HeadObjectCommand during confirmUpload, immediately
+   *    deleting and discarding any object exceeding 25MB before confirmation.
    */
   async getPresignedUploadUrl(request: PresignUploadRequest): Promise<PresignUploadResponse> {
     const fileKey =

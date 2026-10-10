@@ -16,6 +16,7 @@ import {
 import {
   MALWARE_SCANNER_TOKEN,
   IMalwareScanner,
+  MalwareScanResult,
 } from '../../infrastructure/storage/malware/malware-scanner.interface';
 import { FileScanStatus, UserContext, UserRole, ErrorCode } from '@merqent/shared-types';
 import {
@@ -151,32 +152,91 @@ export class FilesService {
     if (objectMeta.contentLength > MAX_FILE_SIZE_BYTES) {
       await this.storage.deleteFile(fileRecord.storageKey);
       await this.prisma.fileRecord.delete({ where: { id: fileRecordId } });
+      this.logger.warn(
+        `Oversized object (${objectMeta.contentLength} bytes > 25MB) discarded and cleaned up for fileRecord '${fileRecordId}'`,
+      );
       throw new BadRequestException({
         errorCode: ErrorCode.FILE_TOO_LARGE,
         message: 'Uploaded file exceeds maximum permitted size of 25MB. Object has been discarded.',
       });
     }
 
-    // Execute malware scanning boundary inspection
-    const scanResult = await this.malwareScanner.scan(fileRecord.storageKey);
-    if (!scanResult.isClean) {
+    if (objectMeta.contentLength === 0) {
       await this.storage.deleteFile(fileRecord.storageKey);
-      await this.prisma.fileRecord.update({
-        where: { id: fileRecordId },
-        data: { scanStatus: FileScanStatus.INFECTED },
-      });
-
-      this.logger.error(
-        `SECURITY ALERT: Malware detected in file '${fileRecordId}'. Object quarantined and discarded.`,
-      );
-
-      throw new ForbiddenException({
-        errorCode: ErrorCode.MALWARE_DETECTED,
-        message:
-          'Security threat detected: File failed malware scanning inspection and was rejected.',
+      await this.prisma.fileRecord.delete({ where: { id: fileRecordId } });
+      throw new BadRequestException({
+        errorCode: ErrorCode.STORAGE_ERROR,
+        message: 'Uploaded file is empty (0 bytes). Object has been discarded.',
       });
     }
 
+    // Execute malware scanning boundary inspection (fails closed)
+    let scanResult: MalwareScanResult;
+    try {
+      if (!this.malwareScanner.isLive) {
+        this.logger.warn(
+          `Malware scanner daemon is inactive or not configured for file '${fileRecordId}'. Failing closed: file remains PENDING and cannot be cleared as clean.`,
+        );
+        const updatedPending = await this.prisma.fileRecord.update({
+          where: { id: fileRecordId },
+          data: {
+            scanStatus: FileScanStatus.PENDING,
+            fileSizeBytes: objectMeta.contentLength || fileRecord.fileSizeBytes,
+            ...(checksumSha256 ? { checksumSha256 } : {}),
+          },
+        });
+        return this.mapToFileRecordDto(updatedPending);
+      }
+
+      scanResult = await this.malwareScanner.scan(fileRecord.storageKey);
+    } catch (scanErr: unknown) {
+      this.logger.error(
+        `Malware scanner encountered an error or timeout for '${fileRecordId}': ${(scanErr as Error).message}. Failing closed.`,
+      );
+      // Fail closed: file remains PENDING and unavailable for download
+      const updatedFailed = await this.prisma.fileRecord.update({
+        where: { id: fileRecordId },
+        data: {
+          scanStatus: FileScanStatus.PENDING,
+          fileSizeBytes: objectMeta.contentLength || fileRecord.fileSizeBytes,
+          ...(checksumSha256 ? { checksumSha256 } : {}),
+        },
+      });
+      return this.mapToFileRecordDto(updatedFailed);
+    }
+
+    if (!scanResult.isClean) {
+      if (scanResult.status === FileScanStatus.INFECTED) {
+        await this.storage.deleteFile(fileRecord.storageKey);
+        await this.prisma.fileRecord.update({
+          where: { id: fileRecordId },
+          data: { scanStatus: FileScanStatus.INFECTED },
+        });
+
+        this.logger.error(
+          `SECURITY ALERT: Malware detected in file '${fileRecordId}'. Object quarantined and discarded.`,
+        );
+
+        throw new ForbiddenException({
+          errorCode: ErrorCode.MALWARE_DETECTED,
+          message:
+            'Security threat detected: File failed malware scanning inspection and was rejected.',
+        });
+      }
+
+      // Scanner returned non-clean without explicit infection (e.g. unverified, pending): fail closed
+      const updatedNonClean = await this.prisma.fileRecord.update({
+        where: { id: fileRecordId },
+        data: {
+          scanStatus: FileScanStatus.PENDING,
+          fileSizeBytes: objectMeta.contentLength || fileRecord.fileSizeBytes,
+          ...(checksumSha256 ? { checksumSha256 } : {}),
+        },
+      });
+      return this.mapToFileRecordDto(updatedNonClean);
+    }
+
+    // Only cleared files with live scanner are marked CLEAN
     const updated = await this.prisma.fileRecord.update({
       where: { id: fileRecordId },
       data: {
@@ -193,7 +253,7 @@ export class FilesService {
 
   /**
    * Generates a short-lived presigned download URL after enforcing tenant isolation,
-   * ownership verification, and infection status.
+   * ownership verification, and clearance status.
    */
   async getDownloadUrl(
     user: UserContext,
@@ -213,11 +273,18 @@ export class FilesService {
     // Enforce Tenant & Ownership Authorization
     await this.authorizeFileAccess(user, fileRecord);
 
-    // Reject infected files
+    // Enforce Quarantine & Clearance: Only CLEAN files can be downloaded
     if (fileRecord.scanStatus === FileScanStatus.INFECTED) {
       throw new ForbiddenException({
         errorCode: ErrorCode.MALWARE_DETECTED,
         message: 'Access prohibited: File is quarantined due to malware infection',
+      });
+    }
+
+    if (fileRecord.scanStatus !== FileScanStatus.CLEAN) {
+      throw new ForbiddenException({
+        errorCode: ErrorCode.FILE_ACCESS_DENIED,
+        message: `Access prohibited: File is unavailable for download until malware scanning has cleared it (current status: ${fileRecord.scanStatus})`,
       });
     }
 
@@ -287,9 +354,19 @@ export class FilesService {
 
   /**
    * Cleans up abandoned pending uploads that were never confirmed within the expiry window.
-   * Operates strictly on expired unconfirmed records without affecting other tenants' data.
+   * Requires administrative role and provides atomic race-safety against concurrent confirmation or deletion.
    */
-  async cleanupAbandonedUploads(maxAgeHours = 24): Promise<{ deletedCount: number }> {
+  async cleanupAbandonedUploads(
+    user: UserContext,
+    maxAgeHours = 24,
+  ): Promise<{ deletedCount: number }> {
+    if (user.role !== UserRole.PLATFORM_ADMIN) {
+      throw new ForbiddenException({
+        errorCode: ErrorCode.FORBIDDEN,
+        message: 'Forbidden: Only platform administrators can trigger abandoned upload cleanup',
+      });
+    }
+
     const cutoffDate = new Date(Date.now() - maxAgeHours * 60 * 60 * 1000);
 
     const abandonedRecords = await this.prisma.fileRecord.findMany({
@@ -303,18 +380,27 @@ export class FilesService {
 
     let deletedCount = 0;
     for (const record of abandonedRecords) {
-      try {
-        await this.storage.deleteFile(record.storageKey);
-      } catch (err: unknown) {
-        this.logger.debug(
-          `Cleanup: Storage object '${record.storageKey}' already absent during cleanup: ${(err as Error).message}`,
-        );
-      }
-
-      await this.prisma.fileRecord.delete({
-        where: { id: record.id },
+      // Atomic conditional delete: ensure the record is still PENDING and older than cutoffDate.
+      // If a concurrent user confirmed the upload (changing status to CLEAN) or deleted it,
+      // count will be 0 and we avoid touching storage or deleting valid data.
+      const deleteResult = await this.prisma.fileRecord.deleteMany({
+        where: {
+          id: record.id,
+          scanStatus: FileScanStatus.PENDING,
+          createdAt: { lt: cutoffDate },
+        },
       });
-      deletedCount++;
+
+      if (deleteResult.count > 0) {
+        try {
+          await this.storage.deleteFile(record.storageKey);
+        } catch (err: unknown) {
+          this.logger.debug(
+            `Cleanup: Storage object '${record.storageKey}' already absent during cleanup: ${(err as Error).message}`,
+          );
+        }
+        deletedCount++;
+      }
     }
 
     this.logger.log(
