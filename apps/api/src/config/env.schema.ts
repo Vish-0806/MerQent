@@ -75,10 +75,7 @@ export function validateEnv(rawConfig: Record<string, unknown>): EnvConfig {
 
   if (!result.success) {
     const errorDetails = result.error.errors
-      .map(
-        (issue) =>
-          `  - ${issue.path.join('.')}: ${issue.message} (received: ${JSON.stringify(issue)})`,
-      )
+      .map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`)
       .join('\n');
 
     throw new Error(

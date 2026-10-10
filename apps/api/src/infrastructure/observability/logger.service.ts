@@ -132,6 +132,7 @@ export class AppLogger implements NestLoggerService {
 
     if (context) payload.context = context;
     if (stack) payload.stack = stack;
+    if (user?.id) payload.userId = user.id;
     const tenantId =
       user?.firmId ||
       (user as unknown as Record<string, unknown> | undefined)?.['primaryOrganizationId'];

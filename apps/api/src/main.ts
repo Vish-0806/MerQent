@@ -25,22 +25,54 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('port', 4000);
-  const corsOrigins = configService.get<string | string[]>('cors.origins', [
+  // Parse allowed origins into normalized array
+  const rawCorsOrigins = configService.get<string | string[]>('cors.origins', [
     'http://localhost:3000',
   ]);
+  const allowedOrigins: string[] = Array.isArray(rawCorsOrigins)
+    ? rawCorsOrigins
+    : typeof rawCorsOrigins === 'string'
+      ? rawCorsOrigins.split(',').map((o) => o.trim())
+      : ['http://localhost:3000'];
 
-  // Security: Payload body size limits
-  app.use(json({ limit: '10mb' }));
-  app.use(urlencoded({ extended: true, limit: '10mb' }));
+  // Security: Payload body size limits (1MB default mitigates JSON DoS)
+  app.use(json({ limit: '1mb' }));
+  app.use(urlencoded({ extended: true, limit: '1mb' }));
   app.use(cookieParser());
 
-  // CORS configuration
+  // Hardened CORS configuration (rejects wildcards with credentials)
   app.enableCors({
-    origin: corsOrigins,
+    origin: (requestOrigin, callback) => {
+      // Allow requests with no origin (curl, server-to-server, mobile native)
+      if (!requestOrigin) {
+        return callback(null, true);
+      }
+      // Check allowlist
+      if (allowedOrigins.includes(requestOrigin)) {
+        return callback(null, true);
+      }
+      // In development/test, allow localhost ports
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(requestOrigin)
+      ) {
+        return callback(null, true);
+      }
+      // Reject unauthorized origins
+      callback(new Error('CORS origin rejected by security policy'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-correlation-id', 'Accept'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'x-request-id',
+      'x-correlation-id',
+      'x-refresh-token',
+      'Accept',
+    ],
     exposedHeaders: ['x-correlation-id'],
+    maxAge: 86400,
   });
 
   // Global API route prefix

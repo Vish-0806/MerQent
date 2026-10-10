@@ -42,22 +42,30 @@ export class TenantGuard implements CanActivate {
       return true;
     }
 
-    // Extract target firm identifier from request
-    const targetFirmId =
-      req.params?.[tenantParamName] ||
-      req.params?.firmId ||
-      req.params?.id ||
-      req.body?.[tenantParamName] ||
-      req.body?.firmId ||
-      req.query?.[tenantParamName] ||
-      req.query?.firmId ||
-      req.headers?.['x-tenant-id'];
+    // Authoritative target firm identifier resolution:
+    // 1. Route path params (highest trust, authoritative for existing resources)
+    // 2. Request body params (for resource creation)
+    // 3. Query parameters (for tenant-scoped listings)
+    // Note: Spoofable client headers (e.g. x-tenant-id) are rejected to prevent bypasses.
+    let targetFirmId: unknown =
+      req.params?.[tenantParamName] ??
+      req.params?.firmId ??
+      req.body?.[tenantParamName] ??
+      req.body?.firmId ??
+      req.query?.[tenantParamName] ??
+      req.query?.firmId;
 
-    if (!targetFirmId || typeof targetFirmId !== 'string') {
+    if (!targetFirmId && tenantParamName === 'id') {
+      targetFirmId = req.params?.id;
+    }
+
+    if (typeof targetFirmId !== 'string' || targetFirmId.trim().length === 0) {
       throw new ForbiddenException(
         `Forbidden: Tenant identifier '${tenantParamName}' missing from request`,
       );
     }
+
+    const cleanTargetFirmId = targetFirmId.trim();
 
     if (!user.firmId) {
       throw new ForbiddenException(
@@ -65,7 +73,7 @@ export class TenantGuard implements CanActivate {
       );
     }
 
-    if (user.firmId !== targetFirmId) {
+    if (user.firmId !== cleanTargetFirmId) {
       throw new ForbiddenException(
         'Forbidden: Cross-tenant access prohibited. Resource belongs to another organization',
       );

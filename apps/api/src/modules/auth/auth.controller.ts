@@ -20,6 +20,8 @@ import { Request, Response, CookieOptions } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { RateLimit } from '../../common/decorators/rate-limit.decorator';
+import { RateLimitGuard } from '../../common/guards/rate-limit.guard';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RegisterDto, LoginDto, RefreshTokenDto, AuthResponseDto, SanitizedUserDto } from './dto';
@@ -28,6 +30,7 @@ const REFRESH_COOKIE_NAME = 'refresh_token';
 
 @ApiTags('Auth')
 @Controller('auth')
+@UseGuards(RateLimitGuard)
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -36,6 +39,7 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @RateLimit({ limit: 5, ttlSeconds: 60, keyPrefix: 'auth:register' })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Register a new enterprise user account',
@@ -72,6 +76,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @RateLimit({ limit: 5, ttlSeconds: 60, keyPrefix: 'auth:login' })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Authenticate user credentials',
@@ -107,6 +112,7 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
+  @RateLimit({ limit: 15, ttlSeconds: 60, keyPrefix: 'auth:refresh' })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Rotate refresh token and issue new access token',
@@ -201,7 +207,8 @@ export class AuthController {
   }
 
   private clearRefreshTokenCookie(res: Response): void {
-    const isSecure = this.config.get<boolean>('jwt.cookieSecure', false);
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isSecure = this.config.get<boolean>('jwt.cookieSecure', isProduction);
     const domain = this.config.get<string>('jwt.cookieDomain', 'localhost');
     res.clearCookie(REFRESH_COOKIE_NAME, {
       httpOnly: true,
@@ -213,7 +220,8 @@ export class AuthController {
   }
 
   private getCookieOptions(): CookieOptions {
-    const isSecure = this.config.get<boolean>('jwt.cookieSecure', false);
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isSecure = this.config.get<boolean>('jwt.cookieSecure', isProduction);
     const domain = this.config.get<string>('jwt.cookieDomain', 'localhost');
 
     return {

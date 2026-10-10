@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import configuration from '../config/configuration';
 import { AppController } from './app.controller';
 import { CorrelationIdMiddleware } from '../common/middleware/correlation-id.middleware';
+import { SecurityHeadersMiddleware } from '../common/middleware/security-headers.middleware';
 import { CommonModule } from '../common/common.module';
 
 // Infrastructure Modules
@@ -73,6 +74,6 @@ import { AuditModule } from '../modules/audit/audit.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+    consumer.apply(CorrelationIdMiddleware, SecurityHeadersMiddleware).forRoutes('*');
   }
 }

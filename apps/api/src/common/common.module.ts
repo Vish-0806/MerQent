@@ -9,9 +9,15 @@ import { RolesGuard } from './guards/roles.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
 import { TenantGuard } from './guards/tenant.guard';
 
+import { SecurityHeadersMiddleware } from './middleware/security-headers.middleware';
+import { RateLimiterService } from './security/rate-limiter.service';
+import { RateLimitGuard } from './guards/rate-limit.guard';
+
 const COMMON_PROVIDERS = [
   RequestContextService,
   CorrelationIdMiddleware,
+  SecurityHeadersMiddleware,
+  RateLimiterService,
   AppConfigService,
   TransformInterceptor,
   LoggingInterceptor,
@@ -19,6 +25,7 @@ const COMMON_PROVIDERS = [
   RolesGuard,
   PermissionsGuard,
   TenantGuard,
+  RateLimitGuard,
 ];
 
 @Global()

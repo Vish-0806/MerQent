@@ -93,4 +93,19 @@ describe('Environment Configuration Validation (Task 2.2)', () => {
 
     expect(() => validateEnv(invalidEnv)).toThrow('[CONFIGURATION ERROR]');
   });
+
+  it('should never leak attempted secret values in error messages', () => {
+    const secretValue = 'leaked_secret_val_123';
+    const invalidEnv = { ...validBaseEnv, JWT_ACCESS_SECRET: secretValue };
+
+    let thrownMessage = '';
+    try {
+      validateEnv(invalidEnv);
+    } catch (err: unknown) {
+      thrownMessage = (err as Error).message;
+    }
+
+    expect(thrownMessage).toContain('JWT_ACCESS_SECRET');
+    expect(thrownMessage).not.toContain(secretValue);
+  });
 });

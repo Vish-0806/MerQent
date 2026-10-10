@@ -140,4 +140,34 @@ describe('TenantGuard (Task 2.9)', () => {
 
     expect(guard.canActivate(context)).toBe(true);
   });
+
+  it('rejects spoofed x-tenant-id client headers when route or body does not specify tenant', () => {
+    mockReflector.getAllAndOverride
+      .mockReturnValueOnce(false) // isPublic
+      .mockReturnValueOnce('firmId'); // paramName
+    const context = createMockContext({
+      user: { id: 'pe-1', role: UserRole.PE_FIRM_ADMIN, firmId: 'firm-my-firm' },
+      headers: { 'x-tenant-id': 'firm-my-firm' }, // spoofed header attempt
+    });
+
+    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+    expect(() => guard.canActivate(context)).toThrow(
+      "Forbidden: Tenant identifier 'firmId' missing from request",
+    );
+  });
+
+  it('rejects type-confusion / non-string tenant parameter injection', () => {
+    mockReflector.getAllAndOverride
+      .mockReturnValueOnce(false) // isPublic
+      .mockReturnValueOnce('firmId'); // paramName
+    const context = createMockContext({
+      user: { id: 'pe-1', role: UserRole.PE_FIRM_ADMIN, firmId: 'firm-my-firm' },
+      body: { firmId: ['firm-my-firm', 'firm-other-firm'] }, // array injection attack
+    });
+
+    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+    expect(() => guard.canActivate(context)).toThrow(
+      "Forbidden: Tenant identifier 'firmId' missing from request",
+    );
+  });
 });
