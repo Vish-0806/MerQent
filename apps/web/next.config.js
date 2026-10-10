@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  images: {
+    unoptimized: true,
+  },
   transpilePackages: [
     '@merqent/shared-types',
     '@merqent/validation',
