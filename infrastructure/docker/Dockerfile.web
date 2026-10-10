@@ -1,0 +1,50 @@
+# Production Dockerfile for MerQent Web Frontend
+# Enforces Linux container deployment (node:20-alpine), neutralizing Windows-hosted RCE (GHSA-p293-qw3h-jr36)
+
+FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+RUN npm install -g pnpm@9
+
+FROM base AS builder
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json tsconfig.json ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/shared-types/package.json ./packages/shared-types/
+COPY packages/validation/package.json ./packages/validation/
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/config/package.json ./packages/config/
+
+RUN pnpm install --frozen-lockfile
+
+COPY apps/web ./apps/web
+COPY packages ./packages
+
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+RUN pnpm --filter @merqent/web build
+
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next ./apps/web/.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
+COPY --from=builder /app/apps/web/next.config.js ./apps/web/next.config.js
+
+USER nextjs
+
+EXPOSE 3000
+
+CMD ["pnpm", "--filter", "@merqent/web", "start"]
