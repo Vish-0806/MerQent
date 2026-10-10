@@ -64,6 +64,26 @@ export class AppConfigService {
     return this.config.get<number>('redis.port', 6379);
   }
 
+  get redisPassword(): string | undefined {
+    return this.config.get<string>('redis.password');
+  }
+
+  get redisConnectionOptions(): {
+    host: string;
+    port: number;
+    password?: string;
+    maxRetriesPerRequest: null;
+    enableReadyCheck: boolean;
+  } {
+    return {
+      host: this.redisHost,
+      port: this.redisPort,
+      ...(this.redisPassword ? { password: this.redisPassword } : {}),
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+    };
+  }
+
   get databaseUrl(): string {
     return this.config.get<string>('database.url', '');
   }

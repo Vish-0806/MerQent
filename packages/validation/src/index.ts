@@ -114,7 +114,23 @@ export const ConfirmUploadSchema = z.object({
 });
 
 // ============================================================================
-// 5. Inferred TypeScript Types
+// 5. Background Job & Queue Schemas
+// ============================================================================
+
+export const MalwareScanJobPayloadSchema = z.object({
+  fileRecordId: z.string().uuid('Invalid file record UUID'),
+  storageKey: z.string().min(1, 'Storage key is required').max(512),
+  requestedByUserId: z.string().uuid('Invalid user UUID').optional(),
+  tenantId: z.string().max(100).optional(),
+});
+
+export const CleanupAbandonedJobPayloadSchema = z.object({
+  maxAgeHours: z.number().int().min(1).max(720).default(24),
+  triggeredBy: z.string().max(100).default('scheduled-job'),
+});
+
+// ============================================================================
+// 6. Inferred TypeScript Types
 // ============================================================================
 
 export type IdParamInput = z.infer<typeof IdParamSchema>;
@@ -128,3 +144,5 @@ export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
 export type UpdateConsultantProfileInput = z.infer<typeof UpdateConsultantProfileSchema>;
 export type PresignUploadInput = z.infer<typeof PresignUploadSchema>;
 export type ConfirmUploadInput = z.infer<typeof ConfirmUploadSchema>;
+export type MalwareScanJobPayloadInput = z.infer<typeof MalwareScanJobPayloadSchema>;
+export type CleanupAbandonedJobPayloadInput = z.infer<typeof CleanupAbandonedJobPayloadSchema>;

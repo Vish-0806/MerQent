@@ -17,7 +17,9 @@ import {
   ReadinessResponse,
   DependencyStatusMap,
   RedisHealthStatus,
+  QueueHealthStatus,
 } from '@merqent/shared-types';
+import { JobsService } from '../infrastructure/jobs/jobs.service';
 
 @ApiTags('Health')
 @Controller('health')
@@ -29,6 +31,7 @@ export class AppController {
     @Inject(STORAGE_SERVICE_TOKEN)
     private readonly storage?: IStorageService,
     @Optional() private readonly metrics?: MetricsService,
+    @Optional() private readonly jobsService?: JobsService,
   ) {}
 
   @Get()
@@ -71,15 +74,23 @@ export class AppController {
       );
     }
 
+    let queueStatus: QueueHealthStatus | undefined;
+    if (this.jobsService) {
+      queueStatus = await this.jobsService.checkHealth();
+      this.metrics?.recordDependencyHealth('queue', queueStatus.status !== 'unhealthy');
+    }
+
     const isDegraded =
       dbStatus.status === 'disconnected' ||
       (redisStatus && redisStatus.status === 'disconnected') ||
-      (storageStatus && storageStatus.status === 'disconnected');
+      (storageStatus && storageStatus.status === 'disconnected') ||
+      (queueStatus && queueStatus.status === 'unhealthy');
 
     const dependencies: DependencyStatusMap = {
       database: dbStatus,
       ...(redisStatus ? { redis: redisStatus } : {}),
       ...(storageStatus ? { storage: storageStatus } : {}),
+      ...(queueStatus ? { queue: queueStatus } : {}),
     };
 
     return {
@@ -149,15 +160,22 @@ export class AppController {
       storageStatus = await this.storage.checkHealth();
     }
 
+    let queueStatus: QueueHealthStatus | undefined;
+    if (this.jobsService) {
+      queueStatus = await this.jobsService.checkHealth();
+    }
+
     const isReady =
       dbStatus.status === 'connected' &&
       (!redisStatus || redisStatus.status === 'connected') &&
-      (!storageStatus || storageStatus.status === 'connected');
+      (!storageStatus || storageStatus.status === 'connected') &&
+      (!queueStatus || queueStatus.status !== 'unhealthy');
 
     const dependencies: DependencyStatusMap = {
       database: dbStatus,
       ...(redisStatus ? { redis: redisStatus } : {}),
       ...(storageStatus ? { storage: storageStatus } : {}),
+      ...(queueStatus ? { queue: queueStatus } : {}),
     };
 
     if (!isReady && res) {

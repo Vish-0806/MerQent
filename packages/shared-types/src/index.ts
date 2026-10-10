@@ -322,6 +322,12 @@ export enum ErrorCode {
   FILE_SCAN_FAILED = 'FILE_SCAN_FAILED',
   MALWARE_DETECTED = 'MALWARE_DETECTED',
   STORAGE_ERROR = 'STORAGE_ERROR',
+
+  // Background Job & Queue Operations
+  JOB_ENQUEUE_FAILED = 'JOB_ENQUEUE_FAILED',
+  JOB_PAYLOAD_INVALID = 'JOB_PAYLOAD_INVALID',
+  JOB_EXECUTION_FAILED = 'JOB_EXECUTION_FAILED',
+  QUEUE_UNAVAILABLE = 'QUEUE_UNAVAILABLE',
 }
 
 export interface ApiResponse<T = unknown> {
@@ -406,6 +412,7 @@ export interface DependencyStatusMap {
   database: DatabaseHealthStatus;
   redis?: RedisHealthStatus;
   storage?: StorageHealthStatus;
+  queue?: QueueHealthStatus;
 }
 
 export interface HealthResponse {
@@ -528,4 +535,44 @@ export interface StorageObjectMetadata {
   contentType?: string;
   etag?: string;
   lastModified?: Date;
+}
+
+// ============================================================================
+// 10. Background Job & Queue Infrastructure
+// ============================================================================
+
+export enum QueueName {
+  FILE_PROCESSING = 'file-processing',
+  NOTIFICATIONS = 'notifications',
+}
+
+export enum JobType {
+  MALWARE_SCAN = 'malware-scan',
+  CLEANUP_ABANDONED = 'cleanup-abandoned',
+}
+
+export interface MalwareScanJobPayload {
+  fileRecordId: string;
+  storageKey: string;
+  requestedByUserId?: string;
+  tenantId?: string;
+}
+
+export interface CleanupAbandonedJobPayload {
+  maxAgeHours?: number;
+  triggeredBy?: string;
+}
+
+export interface QueueJobResult {
+  jobId: string;
+  queueName: string;
+  status: 'completed' | 'failed' | 'skipped';
+  message?: string;
+  processedAt: string;
+}
+
+export interface QueueHealthStatus {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  queues: Record<string, { isPaused: boolean; waiting: number; active: number; failed: number }>;
+  workerStatus: 'running' | 'paused' | 'stopped';
 }

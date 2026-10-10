@@ -6,6 +6,7 @@ import {
   DatabaseHealthStatus,
   GenericDependencyHealthStatus,
   DependencyStatusMap,
+  QueueHealthStatus,
 } from '@merqent/shared-types';
 
 export class ApiErrorDetailDto {
@@ -87,6 +88,21 @@ export class StorageDependencyStatusDto implements GenericDependencyHealthStatus
   latencyMs?: number;
 }
 
+export class QueueDependencyStatusDto implements QueueHealthStatus {
+  @ApiProperty({ enum: ['healthy', 'degraded', 'unhealthy'], example: 'healthy' })
+  status!: 'healthy' | 'degraded' | 'unhealthy';
+
+  @ApiProperty({
+    example: {
+      'file-processing': { isPaused: false, waiting: 0, active: 0, failed: 0 },
+    },
+  })
+  queues!: Record<string, { isPaused: boolean; waiting: number; active: number; failed: number }>;
+
+  @ApiProperty({ enum: ['running', 'paused', 'stopped'], example: 'running' })
+  workerStatus!: 'running' | 'paused' | 'stopped';
+}
+
 export class DependencyStatusMapDto implements DependencyStatusMap {
   @ApiProperty({ type: DatabaseDependencyStatusDto })
   database!: DatabaseDependencyStatusDto;
@@ -96,6 +112,9 @@ export class DependencyStatusMapDto implements DependencyStatusMap {
 
   @ApiPropertyOptional({ type: StorageDependencyStatusDto })
   storage?: StorageDependencyStatusDto;
+
+  @ApiPropertyOptional({ type: QueueDependencyStatusDto })
+  queue?: QueueDependencyStatusDto;
 }
 
 export class HealthResponseDto implements HealthResponse {

@@ -15,6 +15,7 @@ import { EmailModule } from '../infrastructure/email/email.module';
 import { AiModule } from '../infrastructure/ai/ai.module';
 import { SearchInfrastructureModule } from '../infrastructure/search/search.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
+import { JobsModule } from '../infrastructure/jobs/jobs.module';
 
 // Domain Module Shells (Architecture-Ready)
 import { AuthModule } from '../modules/auth/auth.module';
@@ -45,6 +46,7 @@ import { AuditModule } from '../modules/audit/audit.module';
     CommonModule,
     DatabaseModule,
     RedisModule,
+    JobsModule,
     ObservabilityModule,
     RealtimeModule,
     StorageModule,
