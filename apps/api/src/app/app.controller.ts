@@ -18,8 +18,10 @@ import {
   DependencyStatusMap,
   RedisHealthStatus,
   QueueHealthStatus,
+  RealtimeHealthStatus,
 } from '@merqent/shared-types';
 import { JobsService } from '../infrastructure/jobs/jobs.service';
+import { RealtimeService } from '../infrastructure/realtime/realtime.service';
 
 @ApiTags('Health')
 @Controller('health')
@@ -32,6 +34,7 @@ export class AppController {
     private readonly storage?: IStorageService,
     @Optional() private readonly metrics?: MetricsService,
     @Optional() private readonly jobsService?: JobsService,
+    @Optional() private readonly realtimeService?: RealtimeService,
   ) {}
 
   @Get()
@@ -80,17 +83,25 @@ export class AppController {
       this.metrics?.recordDependencyHealth('queue', queueStatus.status !== 'unhealthy');
     }
 
+    let realtimeStatus: RealtimeHealthStatus | undefined;
+    if (this.realtimeService) {
+      realtimeStatus = await this.realtimeService.checkHealth();
+      this.metrics?.recordDependencyHealth('realtime', realtimeStatus.status !== 'disconnected');
+    }
+
     const isDegraded =
       dbStatus.status === 'disconnected' ||
       (redisStatus && redisStatus.status === 'disconnected') ||
       (storageStatus && storageStatus.status === 'disconnected') ||
-      (queueStatus && queueStatus.status === 'unhealthy');
+      (queueStatus && queueStatus.status === 'unhealthy') ||
+      (realtimeStatus && realtimeStatus.status === 'disconnected');
 
     const dependencies: DependencyStatusMap = {
       database: dbStatus,
       ...(redisStatus ? { redis: redisStatus } : {}),
       ...(storageStatus ? { storage: storageStatus } : {}),
       ...(queueStatus ? { queue: queueStatus } : {}),
+      ...(realtimeStatus ? { realtime: realtimeStatus } : {}),
     };
 
     return {
@@ -165,17 +176,24 @@ export class AppController {
       queueStatus = await this.jobsService.checkHealth();
     }
 
+    let realtimeStatus: RealtimeHealthStatus | undefined;
+    if (this.realtimeService) {
+      realtimeStatus = await this.realtimeService.checkHealth();
+    }
+
     const isReady =
       dbStatus.status === 'connected' &&
       (!redisStatus || redisStatus.status === 'connected') &&
       (!storageStatus || storageStatus.status === 'connected') &&
-      (!queueStatus || queueStatus.status !== 'unhealthy');
+      (!queueStatus || queueStatus.status !== 'unhealthy') &&
+      (!realtimeStatus || realtimeStatus.status !== 'disconnected');
 
     const dependencies: DependencyStatusMap = {
       database: dbStatus,
       ...(redisStatus ? { redis: redisStatus } : {}),
       ...(storageStatus ? { storage: storageStatus } : {}),
       ...(queueStatus ? { queue: queueStatus } : {}),
+      ...(realtimeStatus ? { realtime: realtimeStatus } : {}),
     };
 
     if (!isReady && res) {

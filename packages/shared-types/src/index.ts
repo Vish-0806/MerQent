@@ -328,6 +328,15 @@ export enum ErrorCode {
   JOB_PAYLOAD_INVALID = 'JOB_PAYLOAD_INVALID',
   JOB_EXECUTION_FAILED = 'JOB_EXECUTION_FAILED',
   QUEUE_UNAVAILABLE = 'QUEUE_UNAVAILABLE',
+
+  // Realtime & WebSocket Operations
+  WS_AUTHENTICATION_FAILED = 'WS_AUTHENTICATION_FAILED',
+  WS_UNAUTHORIZED = 'WS_UNAUTHORIZED',
+  WS_FORBIDDEN = 'WS_FORBIDDEN',
+  WS_ROOM_JOIN_DENIED = 'WS_ROOM_JOIN_DENIED',
+  WS_RATE_LIMIT_EXCEEDED = 'WS_RATE_LIMIT_EXCEEDED',
+  WS_INVALID_PAYLOAD = 'WS_INVALID_PAYLOAD',
+  WS_ADAPTER_ERROR = 'WS_ADAPTER_ERROR',
 }
 
 export interface ApiResponse<T = unknown> {
@@ -413,6 +422,7 @@ export interface DependencyStatusMap {
   redis?: RedisHealthStatus;
   storage?: StorageHealthStatus;
   queue?: QueueHealthStatus;
+  realtime?: RealtimeHealthStatus;
 }
 
 export interface HealthResponse {
@@ -575,4 +585,69 @@ export interface QueueHealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
   queues: Record<string, { isPaused: boolean; waiting: number; active: number; failed: number }>;
   workerStatus: 'running' | 'paused' | 'stopped';
+}
+
+// ============================================================================
+// 11. Realtime & WebSocket Infrastructure
+// ============================================================================
+
+export enum RealtimeEvent {
+  CONNECTION_ESTABLISHED = 'connection:established',
+  ROOM_JOIN = 'room:join',
+  ROOM_JOINED = 'room:joined',
+  ROOM_LEAVE = 'room:leave',
+  ROOM_LEFT = 'room:left',
+  ERROR = 'error',
+  HEARTBEAT = 'heartbeat',
+  HEARTBEAT_ACK = 'heartbeat:ack',
+  DISCONNECT = 'disconnect',
+}
+
+export interface WsAuthenticatedUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  firmId?: string;
+  consultantProfileId?: string;
+}
+
+export interface WsConnectionPayload {
+  socketId: string;
+  userId: string;
+  connectedAt: string;
+}
+
+export interface WsRoomJoinPayload {
+  roomId: string;
+}
+
+export interface WsRoomJoinedPayload {
+  roomId: string;
+  userId: string;
+}
+
+export interface WsRoomLeavePayload {
+  roomId: string;
+}
+
+export interface WsRoomLeftPayload {
+  roomId: string;
+  userId: string;
+}
+
+export interface WsHeartbeatPayload {
+  timestamp?: number;
+}
+
+export interface WsErrorPayload {
+  code: string;
+  message: string;
+  details?: unknown;
+}
+
+export interface RealtimeHealthStatus {
+  status: 'connected' | 'degraded' | 'disconnected';
+  adapter: 'redis' | 'memory';
+  activeConnections: number;
+  roomsCount: number;
 }

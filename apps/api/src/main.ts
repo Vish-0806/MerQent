@@ -12,6 +12,9 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { MetricsService } from './infrastructure/observability/metrics.service';
 import { ErrorCode, ApiErrorDetail } from '@merqent/shared-types';
 
+import { RedisIoAdapter } from './infrastructure/realtime/redis-io.adapter';
+import { RealtimeService } from './infrastructure/realtime/realtime.service';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
@@ -22,6 +25,18 @@ async function bootstrap() {
 
   const logger = app.get(AppLogger);
   app.useLogger(logger);
+
+  // Configure multi-instance Socket.IO Redis adapter with graceful fallback
+  const redisIoAdapter = new RedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis();
+  app.useWebSocketAdapter(redisIoAdapter);
+
+  try {
+    const realtimeService = app.get(RealtimeService);
+    realtimeService.setRedisAdapter(redisIoAdapter);
+  } catch (err: unknown) {
+    logger.warn(`Could not attach Redis adapter to RealtimeService: ${(err as Error).message}`);
+  }
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('port', 4000);

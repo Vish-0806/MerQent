@@ -130,7 +130,29 @@ export const CleanupAbandonedJobPayloadSchema = z.object({
 });
 
 // ============================================================================
-// 6. Inferred TypeScript Types
+// 6. Realtime & WebSocket Schemas
+// ============================================================================
+
+export const WsJoinRoomSchema = z.object({
+  roomId: z
+    .string()
+    .min(1, 'Room ID is required')
+    .max(128, 'Room ID must not exceed 128 characters'),
+});
+
+export const WsLeaveRoomSchema = z.object({
+  roomId: z
+    .string()
+    .min(1, 'Room ID is required')
+    .max(128, 'Room ID must not exceed 128 characters'),
+});
+
+export const WsHeartbeatSchema = z.object({
+  timestamp: z.number().int().positive().optional(),
+});
+
+// ============================================================================
+// 7. Inferred TypeScript Types
 // ============================================================================
 
 export type IdParamInput = z.infer<typeof IdParamSchema>;
@@ -146,3 +168,6 @@ export type PresignUploadInput = z.infer<typeof PresignUploadSchema>;
 export type ConfirmUploadInput = z.infer<typeof ConfirmUploadSchema>;
 export type MalwareScanJobPayloadInput = z.infer<typeof MalwareScanJobPayloadSchema>;
 export type CleanupAbandonedJobPayloadInput = z.infer<typeof CleanupAbandonedJobPayloadSchema>;
+export type WsJoinRoomInput = z.infer<typeof WsJoinRoomSchema>;
+export type WsLeaveRoomInput = z.infer<typeof WsLeaveRoomSchema>;
+export type WsHeartbeatInput = z.infer<typeof WsHeartbeatSchema>;

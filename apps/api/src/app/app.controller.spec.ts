@@ -7,13 +7,15 @@ import { HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 
 import { JobsService } from '../infrastructure/jobs/jobs.service';
+import { RealtimeService } from '../infrastructure/realtime/realtime.service';
 
-describe('AppController Health Probes (Task 2.12 & Task 2.15)', () => {
+describe('AppController Health Probes (Task 2.12, Task 2.15 & Task 2.16)', () => {
   let appController: AppController;
   let mockPrisma: Partial<PrismaService>;
   let mockRedis: Partial<RedisService>;
   let mockStorage: Partial<IStorageService>;
   let mockJobs: Partial<JobsService>;
+  let mockRealtime: Partial<RealtimeService>;
   let metricsService: MetricsService;
 
   beforeEach(() => {
@@ -45,6 +47,14 @@ describe('AppController Health Probes (Task 2.12 & Task 2.15)', () => {
         workerStatus: 'running',
       }),
     };
+    mockRealtime = {
+      checkHealth: jest.fn().mockResolvedValue({
+        status: 'connected',
+        adapter: 'redis',
+        activeConnections: 10,
+        roomsCount: 4,
+      }),
+    };
 
     appController = new AppController(
       mockPrisma as PrismaService,
@@ -52,6 +62,7 @@ describe('AppController Health Probes (Task 2.12 & Task 2.15)', () => {
       mockStorage as IStorageService,
       metricsService,
       mockJobs as JobsService,
+      mockRealtime as RealtimeService,
     );
   });
 
@@ -68,6 +79,8 @@ describe('AppController Health Probes (Task 2.12 & Task 2.15)', () => {
       expect(result.dependencies.redis?.status).toBe('connected');
       expect(result.dependencies.storage?.status).toBe('connected');
       expect(result.dependencies.queue?.status).toBe('healthy');
+      expect(result.dependencies.realtime?.status).toBe('connected');
+      expect(result.dependencies.realtime?.adapter).toBe('redis');
       expect(typeof result.timestamp).toBe('string');
       expect(typeof result.uptime).toBe('number');
 
@@ -77,6 +90,7 @@ describe('AppController Health Probes (Task 2.12 & Task 2.15)', () => {
       expect(metrics.dependencies['redis']?.healthy).toBe(true);
       expect(metrics.dependencies['storage']?.healthy).toBe(true);
       expect(metrics.dependencies['queue']?.healthy).toBe(true);
+      expect(metrics.dependencies['realtime']?.healthy).toBe(true);
     });
 
     it('should return degraded health status when database is disconnected', async () => {
@@ -117,6 +131,21 @@ describe('AppController Health Probes (Task 2.12 & Task 2.15)', () => {
       expect(result).toBeDefined();
       expect(result.status).toBe('degraded');
       expect(result.dependencies.queue?.status).toBe('unhealthy');
+    });
+
+    it('should return degraded health status when realtime service is disconnected', async () => {
+      (mockRealtime.checkHealth as jest.Mock).mockResolvedValueOnce({
+        status: 'disconnected',
+        adapter: 'redis',
+        activeConnections: 0,
+        roomsCount: 0,
+      });
+
+      const result = await appController.checkHealth();
+
+      expect(result).toBeDefined();
+      expect(result.status).toBe('degraded');
+      expect(result.dependencies.realtime?.status).toBe('disconnected');
     });
   });
 
@@ -199,6 +228,25 @@ describe('AppController Health Probes (Task 2.12 & Task 2.15)', () => {
 
       expect(result.status).toBe('not_ready');
       expect(result.dependencies.queue?.status).toBe('unhealthy');
+      expect(mockRes.status).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
+    });
+
+    it('should return not_ready and set 503 HTTP status when realtime is disconnected', async () => {
+      (mockRealtime.checkHealth as jest.Mock).mockResolvedValueOnce({
+        status: 'disconnected',
+        adapter: 'redis',
+        activeConnections: 0,
+        roomsCount: 0,
+      });
+
+      const mockRes = {
+        status: jest.fn(),
+      } as unknown as Response;
+
+      const result = await appController.checkReadiness(mockRes);
+
+      expect(result.status).toBe('not_ready');
+      expect(result.dependencies.realtime?.status).toBe('disconnected');
       expect(mockRes.status).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
     });
   });

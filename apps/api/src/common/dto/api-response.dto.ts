@@ -7,6 +7,7 @@ import {
   GenericDependencyHealthStatus,
   DependencyStatusMap,
   QueueHealthStatus,
+  RealtimeHealthStatus,
 } from '@merqent/shared-types';
 
 export class ApiErrorDetailDto {
@@ -103,6 +104,20 @@ export class QueueDependencyStatusDto implements QueueHealthStatus {
   workerStatus!: 'running' | 'paused' | 'stopped';
 }
 
+export class RealtimeDependencyStatusDto implements RealtimeHealthStatus {
+  @ApiProperty({ enum: ['connected', 'degraded', 'disconnected'], example: 'connected' })
+  status!: 'connected' | 'degraded' | 'disconnected';
+
+  @ApiProperty({ enum: ['redis', 'memory'], example: 'redis' })
+  adapter!: 'redis' | 'memory';
+
+  @ApiProperty({ example: 42, description: 'Number of active authenticated client sockets' })
+  activeConnections!: number;
+
+  @ApiProperty({ example: 15, description: 'Number of active rooms' })
+  roomsCount!: number;
+}
+
 export class DependencyStatusMapDto implements DependencyStatusMap {
   @ApiProperty({ type: DatabaseDependencyStatusDto })
   database!: DatabaseDependencyStatusDto;
@@ -115,6 +130,9 @@ export class DependencyStatusMapDto implements DependencyStatusMap {
 
   @ApiPropertyOptional({ type: QueueDependencyStatusDto })
   queue?: QueueDependencyStatusDto;
+
+  @ApiPropertyOptional({ type: RealtimeDependencyStatusDto })
+  realtime?: RealtimeDependencyStatusDto;
 }
 
 export class HealthResponseDto implements HealthResponse {
