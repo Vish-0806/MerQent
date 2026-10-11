@@ -105,6 +105,8 @@ export const PresignUploadSchema = z.object({
   folder: z.string().max(100).optional(),
 });
 
+export const RequestUploadSchema = PresignUploadSchema;
+
 export const ConfirmUploadSchema = z.object({
   fileRecordId: z.string().uuid('Invalid file record UUID'),
   checksumSha256: z

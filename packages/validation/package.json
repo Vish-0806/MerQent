@@ -2,8 +2,8 @@
   "name": "@merqent/validation",
   "version": "1.0.0",
   "private": true,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "clean": "node -e \"const fs = require('fs'); ['dist', 'tsconfig.tsbuildinfo'].forEach(d => fs.existsSync(d) && fs.rmSync(d, { recursive: true, force: true }))\"",

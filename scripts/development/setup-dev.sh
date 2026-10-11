@@ -50,7 +50,7 @@ echo "[4/6] Verifying local Docker infrastructure..."
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     echo "  ✔ Docker daemon is running."
     echo "  🚀 Starting PostgreSQL 16 + pgvector, Redis, and MinIO..."
-    docker compose -f infrastructure/docker/docker-compose.yml up -d
+    docker compose --env-file .env -f infrastructure/docker/docker-compose.yml up -d
     echo "  ✔ Infrastructure containers started."
 else
     echo "  ⚠ Docker daemon is not currently running. Skipping container startup."
@@ -72,7 +72,7 @@ if pnpm run db:migrate; then
     pnpm run db:seed
     echo "  ✔ Taxonomies seeded."
 else
-    echo "  ⚠ Could not apply migrations. Ensure PostgreSQL is active on port 5432."
+    echo "  ⚠ Could not apply migrations. Ensure PostgreSQL is active and accessible via DATABASE_URL."
 fi
 
 echo ""

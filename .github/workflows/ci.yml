@@ -1,54 +1,276 @@
-name: MerQent CI
+name: MerQent CI — Continuous Integration Pipeline
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  NODE_ENV: test
+  CI: 'true'
 
 jobs:
-  lint-and-typecheck:
-    name: Lint & Typecheck
+  lint-format-typecheck:
+    name: Code Quality, Formatting & Static Typing
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 9
+          version: 9.5.0
 
-      - name: Install Dependencies
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Monorepo Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck Workspace
+      - name: Validate Environment Schema (.env.example)
+        run: node --env-file=.env.example scripts/validate-env.js
+
+      - name: Prettier Code Style Verification
+        run: pnpm format:check
+
+      - name: ESLint Monorepo Linter
+        run: pnpm lint
+
+      - name: Strict TypeScript Typecheck
         run: pnpm typecheck
 
-  unit-tests:
-    name: Unit Tests
+      - name: Prisma Schema Validation
+        run: pnpm prisma:validate
+
+  unit-and-smoke-tests:
+    name: Unit Test Suites & Deployment Smoke Probes
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.5.0
+
+      - name: Setup Node.js 20 LTS
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm prisma:generate
+
+      - name: Build Internal Packages
+        run: pnpm turbo run build --filter=@merqent/shared-types --filter=@merqent/validation --filter=@merqent/config --filter=@merqent/ui
+
+      - name: Execute Monorepo Smoke Probes
+        run: pnpm test:smoke
+
+      - name: Run Unit Test Suites
+        run: pnpm test:unit
+
+  integration-tests:
+    name: Live Infrastructure Integration & E2E Workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: merqent_user
+          POSTGRES_PASSWORD: merqent_dev_password
+          POSTGRES_DB: merqent_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U merqent_user -d merqent_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://merqent_user:merqent_dev_password@localhost:5432/merqent_db?schema=public
+      REDIS_HOST: localhost
+      REDIS_PORT: '6379'
+      STORAGE_DRIVER: memory
+      JWT_ACCESS_SECRET: replace_with_minimum_64_character_cryptographically_secure_random_key
+      JWT_REFRESH_SECRET: replace_with_minimum_64_character_cryptographically_secure_random_key
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 9
+          version: 9.5.0
 
-      - name: Install Dependencies
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Monorepo Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Unit Tests
-        run: pnpm test
+      - name: Generate Prisma Client
+        run: pnpm prisma:generate
+
+      - name: Initialize Database Extensions (init.sql)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          PGPASSWORD=merqent_dev_password psql -h localhost -U merqent_user -d merqent_db -f infrastructure/database/init.sql
+
+      - name: Deploy Prisma Migrations
+        run: pnpm prisma:migrate
+
+      - name: Seed Canonical PMI Taxonomies
+        run: pnpm prisma:seed
+
+      - name: Run Integration Tests
+        run: pnpm test:integration
+
+      - name: Run End-to-End API Workflows
+        run: pnpm test:e2e
+
+  production-build:
+    name: Production Artifact Compilation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.5.0
+
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm prisma:generate
+
+      - name: Monorepo Production Build (Turborepo)
+        run: pnpm build
+
+  docker-verification:
+    name: Dockerfile Build & Compose Orchestration Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose (Development)
+        run: docker compose --env-file .env.example -f infrastructure/docker/docker-compose.yml config
+
+      - name: Validate Docker Compose (Production Stack)
+        run: docker compose --env-file .env.example -f infrastructure/docker/docker-compose.prod.yml config
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build MerQent API Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.api
+          push: false
+          tags: merqent-api:${{ github.sha }}
+
+      - name: Build MerQent Web Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.web
+          push: false
+          tags: merqent-web:${{ github.sha }}
+
+  security-audit:
+    name: Dependency Security & Advisory Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.5.0
+
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Generate Structured Advisory Report
+        run: node scripts/testing/audit-report.js
+
+      - name: Upload Security Audit Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit-report
+          path: reports/security-audit-report.json
+          retention-days: 14
+
+  ci-status-gate:
+    name: Continuous Integration Quality Gate
+    needs:
+      - lint-format-typecheck
+      - unit-and-smoke-tests
+      - integration-tests
+      - production-build
+      - docker-verification
+      - security-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Consolidate CI Quality Gate
+        run: |
+          echo "============================================================"
+          echo "✔ All MerQent CI Quality Gates Passed Successfully!"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Ref:        ${{ github.ref }}"
+          echo "============================================================"

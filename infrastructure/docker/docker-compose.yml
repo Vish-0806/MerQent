@@ -33,7 +33,7 @@ services:
       retries: 5
 
   minio:
-    image: minio/minio:RELEASE.2024-05-28T22-19-46Z
+    image: cgr.dev/chainguard/minio:latest
     container_name: merqent_minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -46,10 +46,29 @@ services:
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "/usr/bin/mc", "ready", "local"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  minio-init:
+    image: cgr.dev/chainguard/minio:latest
+    container_name: merqent_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
+      /usr/bin/mc mb --ignore-existing local/$${STORAGE_BUCKET_NAME};
+      echo 'Bucket verification complete';
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_ACCESS_KEY:-minioadmin}
+      STORAGE_BUCKET_NAME: ${STORAGE_BUCKET_NAME:-merqent-secure-documents}
+    restart: "no"
 
 volumes:
   postgres_data:

@@ -65,7 +65,7 @@ if (-not $SkipDocker) {
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  ✔ Docker daemon is running." -ForegroundColor Green
             Write-Host "  🚀 Starting PostgreSQL 16 + pgvector, Redis, and MinIO..." -ForegroundColor Cyan
-            docker compose -f infrastructure/docker/docker-compose.yml up -d
+            docker compose --env-file .env -f infrastructure/docker/docker-compose.yml up -d
             Write-Host "  ✔ Infrastructure containers started." -ForegroundColor Green
         } else {
             Write-Warning "Docker daemon is not currently running. Skipping container startup."

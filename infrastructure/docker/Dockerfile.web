@@ -1,4 +1,4 @@
-# Production Dockerfile for MerQent Web Frontend
+# Multi-stage Production Dockerfile for MerQent Web Frontend
 # Enforces Linux container deployment (node:20-alpine), neutralizing Windows-hosted RCE (GHSA-p293-qw3h-jr36)
 
 FROM node:20-alpine AS base
@@ -8,17 +8,30 @@ RUN npm install -g pnpm@9
 
 FROM base AS builder
 WORKDIR /app
+
+# Copy monorepo configuration and lockfile
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json tsconfig.json ./
+
+# Copy all package definitions so workspace dependencies resolve accurately
+COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/validation/package.json ./packages/validation/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/config/package.json ./packages/config/
+COPY prisma ./prisma
 
 RUN pnpm install --frozen-lockfile
 
+# Copy application and shared package source files
 COPY apps/web ./apps/web
 COPY packages ./packages
+
+# Build internal dependencies
+RUN pnpm --filter @merqent/shared-types build && \
+    pnpm --filter @merqent/validation build && \
+    pnpm --filter @merqent/ui build && \
+    pnpm --filter @merqent/config build
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
@@ -42,6 +55,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
 COPY --from=builder /app/apps/web/next.config.js ./apps/web/next.config.js
+COPY --from=builder /app/packages ./packages
 
 USER nextjs
 
