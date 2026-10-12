@@ -93,7 +93,7 @@ describe('End-to-End API Workflows & Health Probes', () => {
       }),
     );
 
-    await app.listen(0);
+    await app.listen(0, '127.0.0.1');
     const address = app.getHttpServer().address();
     const port = typeof address === 'string' ? address : address.port;
     baseUrl = `http://127.0.0.1:${port}`;

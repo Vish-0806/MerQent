@@ -17,6 +17,7 @@ permissions:
 env:
   NODE_ENV: test
   CI: 'true'
+  DATABASE_URL: postgresql://merqent_user:merqent_dev_password@localhost:5432/merqent_db?schema=public
 
 jobs:
   lint-format-typecheck:
