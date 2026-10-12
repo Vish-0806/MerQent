@@ -85,7 +85,7 @@ export const envConfigSchema = z
           code: z.ZodIssueCode.custom,
           path: ['METRICS_SCRAPE_KEY'],
           message:
-            'In production, METRICS_SCRAPE_KEY must be at least 32 characters long when configured for monitoring access',
+            'METRICS_SCRAPE_KEY must be at least 32 characters long in production when configured for monitoring access',
         });
       }
     }

@@ -171,25 +171,29 @@ export class MetricsAuthGuard implements CanActivate {
   }
 
   /**
-   * Constant-time string comparison to prevent timing attacks on scraper tokens.
-   * Compares equal-length buffers using crypto.timingSafeEqual.
-   * Safely handles different-length, empty, or malformed inputs without throwing exceptions
-   * or leaking timing information.
+   * Fixed-size digest comparison strategy for scraper credential verification.
+   *
+   * Hashes both the candidate and configured secret with SHA-256 before invoking
+   * crypto.timingSafeEqual() on their resulting 32-byte digests.
+   *
+   * What this protects against:
+   * 1. Eliminates Node.js Buffer length-mismatch exceptions (RangeError) when candidate
+   *    and target have different character lengths, preventing HTTP 500 errors.
+   * 2. Protects against secret extraction via character-by-character timing oracles
+   *    during the secret comparison step itself by comparing fixed-size 32-byte hashes.
+   *
+   * What this does NOT protect against:
+   * 1. Does not guarantee mathematically constant-time execution for the entire HTTP request lifecycle
+   *    (e.g., HTTP header parsing, hashing execution time proportional to input length, TCP transmission latency).
+   * 2. Does not eliminate network-level latency variance or CPU scheduling jitter.
    */
   private safeCompare(candidate: string, target: string): boolean {
     if (!candidate || !target) return false;
     try {
-      const bufCandidate = Buffer.from(candidate, 'utf8');
-      const bufTarget = Buffer.from(target, 'utf8');
+      const hashCandidate = crypto.createHash('sha256').update(candidate, 'utf8').digest();
+      const hashTarget = crypto.createHash('sha256').update(target, 'utf8').digest();
 
-      if (bufCandidate.length !== bufTarget.length) {
-        // Run dummy timingSafeEqual against target buffer to equalize timing profile
-        // and prevent length-oracle timing side-channels
-        crypto.timingSafeEqual(bufTarget, bufTarget);
-        return false;
-      }
-
-      return crypto.timingSafeEqual(bufCandidate, bufTarget);
+      return crypto.timingSafeEqual(hashCandidate, hashTarget);
     } catch {
       return false;
     }

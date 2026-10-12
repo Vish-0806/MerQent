@@ -224,8 +224,26 @@ describe('MetricsAuthGuard (Task 2.R4)', () => {
     });
   });
 
-  describe('Edge Cases: Constant-Time Comparison & Key Length Variations (Task 2.R4-V)', () => {
-    it('rejects keys shorter than target key with HTTP 401 Unauthorized without throwing RangeError or 500', async () => {
+  describe('Credential Comparison Hardening (Task 2.R4-W: SHA-256 Fixed-Size Digest)', () => {
+    it('rejects missing credentials with HTTP 401 Unauthorized', async () => {
+      const context = createMockContext({});
+      await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects empty credentials with HTTP 401 Unauthorized', async () => {
+      const emptyHeaderContext = createMockContext({ 'x-metrics-key': '' });
+      await expect(guard.canActivate(emptyHeaderContext)).rejects.toThrow(UnauthorizedException);
+
+      const whitespaceHeaderContext = createMockContext({ 'x-metrics-key': '   ' });
+      await expect(guard.canActivate(whitespaceHeaderContext)).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      const emptyBearerContext = createMockContext({ authorization: 'Bearer ' });
+      await expect(guard.canActivate(emptyBearerContext)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects shorter credentials with HTTP 401 Unauthorized without RangeError or 500', async () => {
       const shortKeys = ['a', 'ab', '12345', 'short-key', VALID_SCRAPE_KEY.slice(0, 10)];
       for (const candidate of shortKeys) {
         const context = createMockContext({ 'x-metrics-key': candidate });
@@ -233,7 +251,7 @@ describe('MetricsAuthGuard (Task 2.R4)', () => {
       }
     });
 
-    it('rejects keys longer than target key with HTTP 401 Unauthorized without throwing RangeError or 500', async () => {
+    it('rejects longer credentials with HTTP 401 Unauthorized without RangeError or 500', async () => {
       const longKeys = [
         VALID_SCRAPE_KEY + 'x',
         VALID_SCRAPE_KEY.repeat(2),
@@ -246,17 +264,18 @@ describe('MetricsAuthGuard (Task 2.R4)', () => {
       }
     });
 
-    it('rejects equal-length incorrect candidate key with HTTP 401 Unauthorized', async () => {
-      // Same length as VALID_SCRAPE_KEY but different bytes
+    it('rejects equal-length incorrect candidate credentials with HTTP 401 Unauthorized', async () => {
       const equalLengthMismatch = 'x'.repeat(VALID_SCRAPE_KEY.length);
       const context = createMockContext({ 'x-metrics-key': equalLengthMismatch });
       await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
     });
 
-    it('accepts correct key and succeeds', async () => {
-      const context = createMockContext({ 'x-metrics-key': VALID_SCRAPE_KEY });
-      const allowed = await guard.canActivate(context);
-      expect(allowed).toBe(true);
+    it('accepts correct credentials and succeeds via both x-metrics-key and Bearer header', async () => {
+      const headerContext = createMockContext({ 'x-metrics-key': VALID_SCRAPE_KEY });
+      expect(await guard.canActivate(headerContext)).toBe(true);
+
+      const bearerContext = createMockContext({ authorization: `Bearer ${VALID_SCRAPE_KEY}` });
+      expect(await guard.canActivate(bearerContext)).toBe(true);
     });
   });
 

@@ -366,6 +366,10 @@ assert(
   'MetricsAuthGuard uses timingSafeEqual for constant-time scraper key comparison',
 );
 assert(
+  metricsGuardContent.includes('sha256') && metricsGuardContent.includes('createHash'),
+  'MetricsAuthGuard uses fixed-size SHA-256 digest comparison',
+);
+assert(
   metricsGuardContent.includes('PLATFORM_ADMIN'),
   'MetricsAuthGuard restricts JWT access strictly to PLATFORM_ADMIN role',
 );
