@@ -282,6 +282,57 @@ if (fs.existsSync(auditReportPath)) {
   assert(!activeIds.includes('GHSA-89xv-2m56-2m9x'), 'GHSA-89xv-2m56-2m9x is absent');
 }
 
+// 8. Database Safety & Destructive Operation Guards
+console.log('\n▶ Category 8: Database Safety & Destructive Operation Guards');
+const dbGuardPath = path.join(rootDir, 'scripts/database/db-guard.js');
+assert(fs.existsSync(dbGuardPath), 'Database safety guard script exists');
+const { evaluateDestructiveOperation, sanitizeDatabaseUrl } = require(dbGuardPath);
+assert(
+  typeof evaluateDestructiveOperation === 'function',
+  'evaluateDestructiveOperation function exported',
+);
+assert(typeof sanitizeDatabaseUrl === 'function', 'sanitizeDatabaseUrl function exported');
+
+// Behavioral check: Production environment blocked
+assert(
+  evaluateDestructiveOperation({
+    nodeEnv: 'production',
+    databaseUrl: 'postgresql://u:p@localhost:5432/db',
+    confirmation: 'YES',
+  }).isAllowed === false,
+  'Database guard blocks destructive operations when NODE_ENV=production',
+);
+
+// Behavioral check: Production cloud host blocked
+assert(
+  evaluateDestructiveOperation({
+    nodeEnv: 'development',
+    databaseUrl: 'postgresql://u:p@prod.rds.amazonaws.com:5432/db',
+    confirmation: 'YES',
+  }).isAllowed === false,
+  'Database guard blocks production cloud database targets',
+);
+
+// Behavioral check: Missing configuration fails closed
+assert(
+  evaluateDestructiveOperation({ databaseUrl: '' }).isAllowed === false,
+  'Database guard fails closed on missing or unparseable database URL',
+);
+
+// Behavioral check: Unconfirmed local reset blocked
+assert(
+  evaluateDestructiveOperation({
+    nodeEnv: 'development',
+    databaseUrl: 'postgresql://u:p@localhost:5432/db',
+    confirmation: '',
+  }).isAllowed === false,
+  'Database guard requires explicit confirmation for local resets',
+);
+
+// Behavioral check: Credentials sanitized
+const sanitized = sanitizeDatabaseUrl('postgresql://admin:super_secret_password@localhost:5432/db');
+assert(!sanitized.includes('super_secret_password'), 'Sanitizer redacts database passwords');
+
 console.log('\n═══════════════════════════════════════════════════════════════════');
 console.log(`  RESULTS: ${passCount} Passed, ${failCount} Failed`);
 console.log('═══════════════════════════════════════════════════════════════════\n');

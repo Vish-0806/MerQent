@@ -29,6 +29,14 @@ if (-not $Force) {
     }
 }
 
+# Enforce fail-closed safety guard checks
+Write-Host "`n[Safety Gate] Validating database target safety..." -ForegroundColor Cyan
+node scripts/database/db-guard.js --force
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Safety guard check failed. Aborting database reset."
+    exit 1
+}
+
 Write-Host "`n[1/3] Resetting schema via Prisma Migrate..." -ForegroundColor Cyan
 pnpm prisma migrate reset --force --schema=prisma/schema.prisma
 
