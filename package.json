@@ -39,7 +39,8 @@
     "prisma:migrate": "prisma migrate deploy --schema=prisma/schema.prisma",
     "prisma:migrate:dev": "prisma migrate dev --schema=prisma/schema.prisma",
     "prisma:seed": "pnpm --filter @merqent/api run prisma:seed",
-    "prisma:status": "prisma migrate status --schema=prisma/schema.prisma"
+    "prisma:status": "prisma migrate status --schema=prisma/schema.prisma",
+    "prisma:reset": "pnpm run db:reset"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",

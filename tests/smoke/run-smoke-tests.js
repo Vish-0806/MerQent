@@ -329,6 +329,29 @@ assert(
   'Database guard requires explicit confirmation for local resets',
 );
 
+// Behavioral check: Docker container hosts not trusted merely by name
+assert(
+  evaluateDestructiveOperation({
+    nodeEnv: 'development',
+    databaseUrl: 'postgresql://u:p@merqent_postgres:5432/db',
+    confirmation: 'YES',
+    allowRemote: false,
+  }).isAllowed === false,
+  'Database guard blocks Docker container host without explicit maintenance override',
+);
+
+// Behavioral check: Ambiguous target blocked
+assert(
+  evaluateDestructiveOperation({
+    nodeEnv: 'development',
+    databaseUrl: 'postgresql://u:p@unknown-bare-host:5432/db',
+    confirmation: 'YES',
+    allowRemote: true,
+    confirmRemote: 'I_CONFIRM_REMOTE_DATABASE_WIPE',
+  }).isAllowed === false,
+  'Database guard rejects ambiguous targets even with maintenance override',
+);
+
 // Behavioral check: Credentials sanitized
 const sanitized = sanitizeDatabaseUrl('postgresql://admin:super_secret_password@localhost:5432/db');
 assert(!sanitized.includes('super_secret_password'), 'Sanitizer redacts database passwords');

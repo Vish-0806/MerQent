@@ -14,6 +14,8 @@
     "prisma:seed": "ts-node ../../prisma/seed/seed.ts",
     "prisma:status": "prisma migrate status --schema=../../prisma/schema.prisma",
     "prisma:studio": "prisma studio --schema=../../prisma/schema.prisma",
+    "db:reset": "node ../../scripts/database/db-guard.js && prisma migrate reset --schema=../../prisma/schema.prisma",
+    "prisma:reset": "node ../../scripts/database/db-guard.js && prisma migrate reset --schema=../../prisma/schema.prisma",
     "test": "jest",
     "test:unit": "jest --testPathIgnorePatterns=test-integration --testPathIgnorePatterns=test-e2e --testPathIgnorePatterns=integration",
     "test:integration": "jest \"src/test-integration\"",

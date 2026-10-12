@@ -9,20 +9,22 @@
 
 [CmdletBinding()]
 param(
-    [switch]$Force
+    [switch]$Force,
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$RemainingArgs
 )
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "============================================================" -ForegroundColor Yellow
-Write-Host "   MerQent — Local Database Reset Procedure" -ForegroundColor Yellow
+Write-Host "   MerQent - Local Database Reset Procedure" -ForegroundColor Yellow
 Write-Host "============================================================" -ForegroundColor Yellow
 
 if (-not $Force) {
     Write-Warning "CAUTION: This will drop and recreate all tables in the database target specified by DATABASE_URL."
     Write-Host "To confirm immediately, run with: .\scripts\database\reset-db.ps1 -Force" -ForegroundColor DarkYellow
     Write-Host "Or enter 'YES' below to proceed:" -ForegroundColor Cyan
-    $confirmation = Read-Host "Proceed with database reset? (Type 'YES')"
+    $confirmation = Read-Host "Proceed with database reset? Type YES to proceed"
     if ($confirmation -ne "YES") {
         Write-Host "Reset aborted by user." -ForegroundColor Gray
         exit 0
@@ -31,7 +33,7 @@ if (-not $Force) {
 
 # Enforce fail-closed safety guard checks
 Write-Host "`n[Safety Gate] Validating database target safety..." -ForegroundColor Cyan
-node scripts/database/db-guard.js --force
+node scripts/database/db-guard.js --force $RemainingArgs
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Safety guard check failed. Aborting database reset."
     exit 1
@@ -46,4 +48,4 @@ pnpm prisma:status
 Write-Host "`n[3/3] Seeding canonical PMI taxonomies..." -ForegroundColor Cyan
 pnpm prisma:seed
 
-Write-Host "`n✔ Database reset, migrations, and seeding completed successfully." -ForegroundColor Green
+Write-Host "`n[SUCCESS] Database reset, migrations, and seeding completed successfully." -ForegroundColor Green

@@ -32,7 +32,7 @@ fi
 # Enforce fail-closed safety guard checks
 echo ""
 echo "[Safety Gate] Validating database target safety..."
-node scripts/database/db-guard.js --force
+node scripts/database/db-guard.js --force "$@"
 
 echo ""
 echo "[1/3] Resetting schema via Prisma Migrate..."
