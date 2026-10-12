@@ -107,6 +107,11 @@ assert(
   envExampleContent.includes('STORAGE_BUCKET_NAME'),
   '.env.example declares STORAGE_BUCKET_NAME',
 );
+assert(
+  envExampleContent.includes('MALWARE_SCANNER_ENABLED'),
+  '.env.example declares MALWARE_SCANNER_ENABLED',
+);
+assert(envExampleContent.includes('CLAMAV_HOST'), '.env.example declares CLAMAV_HOST');
 
 // 4. API Infrastructure & Gateway Files
 console.log('\n▶ Category 4: API Infrastructure Foundations');
@@ -179,6 +184,20 @@ assert(
 assert(
   fs.existsSync(path.join(testUtilsDir, 'mocks/mock-malware.ts')),
   'Mock malware scanner exists',
+);
+assert(
+  fs.existsSync(path.join(apiSrcDir, 'infrastructure/storage/malware/clamav-scanner.service.ts')),
+  'ClamAV malware scanner service exists',
+);
+assert(
+  fs.existsSync(path.join(apiSrcDir, 'infrastructure/storage/malware/clamav-client.ts')),
+  'ClamAV TCP client exists',
+);
+assert(
+  fs.existsSync(
+    path.join(apiSrcDir, 'test-integration/malware-scanner-clamav.integration.spec.ts'),
+  ),
+  'ClamAV wire protocol integration test suite exists',
 );
 assert(
   fs.existsSync(

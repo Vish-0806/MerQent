@@ -1,3 +1,4 @@
+import { Readable } from 'stream';
 import {
   IStorageService,
   PresignUploadRequest,
@@ -25,6 +26,7 @@ export function createMockStorageService(): MockStorageService {
       (service.headObject as jest.Mock).mockClear();
       (service.deleteFile as jest.Mock).mockClear();
       if (service.uploadObject) (service.uploadObject as jest.Mock).mockClear();
+      if (service.getObjectStream) (service.getObjectStream as jest.Mock).mockClear();
     },
     getPresignedUploadUrl: jest
       .fn()
@@ -65,6 +67,13 @@ export function createMockStorageService(): MockStorageService {
       .mockImplementation(async (fileKey: string, body: Buffer | Uint8Array): Promise<void> => {
         objects.set(fileKey, Buffer.from(body));
       }),
+    getObjectStream: jest.fn().mockImplementation(async (fileKey: string): Promise<Readable> => {
+      const data = objects.get(fileKey);
+      if (!data) {
+        throw new Error(`Storage object '${fileKey}' not found in mock storage`);
+      }
+      return Readable.from(data);
+    }),
   };
 
   return service;

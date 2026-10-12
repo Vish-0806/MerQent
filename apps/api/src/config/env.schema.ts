@@ -58,6 +58,14 @@ export const envConfigSchema = z.object({
   STORAGE_SECRET_ACCESS_KEY: z.string().default('minioadmin'),
   STORAGE_SIGNED_URL_EXPIRY_SECONDS: z.coerce.number().int().min(60).max(86400).default(900),
 
+  // Malware Scanning (ClamAV)
+  MALWARE_SCANNER_ENABLED: z
+    .preprocess((val) => val === 'true' || val === true || val === '1', z.boolean())
+    .default(false),
+  CLAMAV_HOST: z.string().default('localhost'),
+  CLAMAV_PORT: z.coerce.number().int().min(1).max(65535).default(3310),
+  CLAMAV_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120000).default(10000),
+
   // Transactional Email
   RESEND_API_KEY: z.string().default('re_placeholder_api_key'),
   EMAIL_FROM_ADDRESS: z.string().default('MerQent Team <notifications@merqent.com>'),

@@ -36,6 +36,12 @@ export interface AppConfiguration {
     secretAccessKey: string;
     signedUrlExpirySeconds: number;
   };
+  malware: {
+    enabled: boolean;
+    host: string;
+    port: number;
+    timeoutMs: number;
+  };
   email: {
     apiKey: string;
     fromAddress: string;
@@ -94,6 +100,12 @@ export default (): AppConfiguration => {
       accessKeyId: env.STORAGE_ACCESS_KEY_ID,
       secretAccessKey: env.STORAGE_SECRET_ACCESS_KEY,
       signedUrlExpirySeconds: env.STORAGE_SIGNED_URL_EXPIRY_SECONDS,
+    },
+    malware: {
+      enabled: env.MALWARE_SCANNER_ENABLED,
+      host: env.CLAMAV_HOST,
+      port: env.CLAMAV_PORT,
+      timeoutMs: env.CLAMAV_TIMEOUT_MS,
     },
     email: {
       apiKey: env.RESEND_API_KEY,

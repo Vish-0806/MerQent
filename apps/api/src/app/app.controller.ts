@@ -8,6 +8,10 @@ import {
   IStorageService,
   StorageHealthStatus,
 } from '../infrastructure/storage/storage.interface';
+import {
+  MALWARE_SCANNER_TOKEN,
+  IMalwareScanner,
+} from '../infrastructure/storage/malware/malware-scanner.interface';
 import { MetricsService } from '../infrastructure/observability/metrics.service';
 import { BypassTransform } from '../common/interceptors/transform.interceptor';
 import { HealthResponseDto } from '../common/dto/api-response.dto';
@@ -19,6 +23,7 @@ import {
   RedisHealthStatus,
   QueueHealthStatus,
   RealtimeHealthStatus,
+  ScannerHealthStatus,
 } from '@merqent/shared-types';
 import { JobsService } from '../infrastructure/jobs/jobs.service';
 import { RealtimeService } from '../infrastructure/realtime/realtime.service';
@@ -35,6 +40,9 @@ export class AppController {
     @Optional() private readonly metrics?: MetricsService,
     @Optional() private readonly jobsService?: JobsService,
     @Optional() private readonly realtimeService?: RealtimeService,
+    @Optional()
+    @Inject(MALWARE_SCANNER_TOKEN)
+    private readonly malwareScanner?: IMalwareScanner,
   ) {}
 
   @Get()
@@ -89,12 +97,19 @@ export class AppController {
       this.metrics?.recordDependencyHealth('realtime', realtimeStatus.status !== 'disconnected');
     }
 
+    let scannerStatus: ScannerHealthStatus | undefined;
+    if (this.malwareScanner?.checkHealth) {
+      scannerStatus = await this.malwareScanner.checkHealth();
+      this.metrics?.recordDependencyHealth('scanner', scannerStatus.status !== 'disconnected');
+    }
+
     const isDegraded =
       dbStatus.status === 'disconnected' ||
       (redisStatus && redisStatus.status === 'disconnected') ||
       (storageStatus && storageStatus.status === 'disconnected') ||
       (queueStatus && queueStatus.status === 'unhealthy') ||
-      (realtimeStatus && realtimeStatus.status === 'disconnected');
+      (realtimeStatus && realtimeStatus.status === 'disconnected') ||
+      (scannerStatus && scannerStatus.status === 'disconnected');
 
     const dependencies: DependencyStatusMap = {
       database: dbStatus,
@@ -102,6 +117,7 @@ export class AppController {
       ...(storageStatus ? { storage: storageStatus } : {}),
       ...(queueStatus ? { queue: queueStatus } : {}),
       ...(realtimeStatus ? { realtime: realtimeStatus } : {}),
+      ...(scannerStatus ? { scanner: scannerStatus } : {}),
     };
 
     return {
@@ -181,12 +197,18 @@ export class AppController {
       realtimeStatus = await this.realtimeService.checkHealth();
     }
 
+    let scannerStatus: ScannerHealthStatus | undefined;
+    if (this.malwareScanner?.checkHealth) {
+      scannerStatus = await this.malwareScanner.checkHealth();
+    }
+
     const isReady =
       dbStatus.status === 'connected' &&
       (!redisStatus || redisStatus.status === 'connected') &&
       (!storageStatus || storageStatus.status === 'connected') &&
       (!queueStatus || queueStatus.status !== 'unhealthy') &&
-      (!realtimeStatus || realtimeStatus.status !== 'disconnected');
+      (!realtimeStatus || realtimeStatus.status !== 'disconnected') &&
+      (!scannerStatus || scannerStatus.status !== 'disconnected');
 
     const dependencies: DependencyStatusMap = {
       database: dbStatus,
@@ -194,6 +216,7 @@ export class AppController {
       ...(storageStatus ? { storage: storageStatus } : {}),
       ...(queueStatus ? { queue: queueStatus } : {}),
       ...(realtimeStatus ? { realtime: realtimeStatus } : {}),
+      ...(scannerStatus ? { scanner: scannerStatus } : {}),
     };
 
     if (!isReady && res) {

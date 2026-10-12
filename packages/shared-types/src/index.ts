@@ -416,6 +416,12 @@ export interface GenericDependencyHealthStatus {
 export type DatabaseHealthStatus = GenericDependencyHealthStatus;
 export type RedisHealthStatus = GenericDependencyHealthStatus;
 export type StorageHealthStatus = GenericDependencyHealthStatus;
+export interface ScannerHealthStatus {
+  status: DependencyStatus | 'disabled';
+  latencyMs?: number;
+  version?: string;
+  error?: string;
+}
 
 export interface DependencyStatusMap {
   database: DatabaseHealthStatus;
@@ -423,6 +429,7 @@ export interface DependencyStatusMap {
   storage?: StorageHealthStatus;
   queue?: QueueHealthStatus;
   realtime?: RealtimeHealthStatus;
+  scanner?: ScannerHealthStatus;
 }
 
 export interface HealthResponse {

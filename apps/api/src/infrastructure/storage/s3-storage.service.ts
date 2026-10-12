@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Readable } from 'stream';
 import {
   S3Client,
   PutObjectCommand,
@@ -199,6 +200,29 @@ export class S3StorageService implements IStorageService {
     });
 
     await this.s3Client.send(command);
+  }
+
+  /**
+   * Retrieves an object as a Readable stream for scanning or direct processing.
+   */
+  async getObjectStream(fileKey: string): Promise<Readable> {
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: fileKey,
+    });
+
+    try {
+      const response = await this.s3Client.send(command);
+      if (!response.Body) {
+        throw new Error(`Empty body returned for storage key '${fileKey}'`);
+      }
+      return response.Body as Readable;
+    } catch (err: unknown) {
+      this.logger.error(
+        `Failed to retrieve object stream for key '${fileKey}': ${(err as Error).message}`,
+      );
+      throw err;
+    }
   }
 
   /**

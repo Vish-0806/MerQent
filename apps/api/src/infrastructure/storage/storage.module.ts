@@ -3,6 +3,7 @@ import { STORAGE_SERVICE_TOKEN } from './storage.interface';
 import { S3StorageService } from './s3-storage.service';
 import { MALWARE_SCANNER_TOKEN } from './malware/malware-scanner.interface';
 import { BoundaryMalwareScannerService } from './malware/boundary-malware-scanner.service';
+import { ClamAvMalwareScannerService } from './malware/clamav-scanner.service';
 
 @Module({
   providers: [
@@ -12,9 +13,10 @@ import { BoundaryMalwareScannerService } from './malware/boundary-malware-scanne
       useClass: S3StorageService,
     },
     BoundaryMalwareScannerService,
+    ClamAvMalwareScannerService,
     {
       provide: MALWARE_SCANNER_TOKEN,
-      useClass: BoundaryMalwareScannerService,
+      useClass: ClamAvMalwareScannerService,
     },
   ],
   exports: [
@@ -22,6 +24,7 @@ import { BoundaryMalwareScannerService } from './malware/boundary-malware-scanne
     S3StorageService,
     MALWARE_SCANNER_TOKEN,
     BoundaryMalwareScannerService,
+    ClamAvMalwareScannerService,
   ],
 })
 export class StorageModule {}

@@ -51,6 +51,9 @@ try {
   console.log(`   - Database URI:  ${validated.DATABASE_URL.replace(/:[^:@]+@/, ':****@')}`);
   console.log(`   - Redis Host:    ${validated.REDIS_HOST}:${validated.REDIS_PORT}`);
   console.log(`   - Storage:       ${validated.STORAGE_DRIVER} (${validated.STORAGE_ENDPOINT})`);
+  console.log(
+    `   - Scanner:       ${validated.MALWARE_SCANNER_ENABLED ? 'ENABLED' : 'DISABLED'} (${validated.CLAMAV_HOST}:${validated.CLAMAV_PORT})`,
+  );
   console.log(`   - Log Level:     ${validated.LOG_LEVEL}`);
   process.exit(0);
 } catch (error) {

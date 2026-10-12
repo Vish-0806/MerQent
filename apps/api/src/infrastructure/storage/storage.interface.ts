@@ -1,3 +1,4 @@
+import { Readable } from 'stream';
 import { StorageObjectMetadata } from '@merqent/shared-types';
 
 export interface PresignUploadRequest {
@@ -29,4 +30,5 @@ export interface IStorageService {
   deleteFile(fileKey: string): Promise<void>;
   checkHealth?(): Promise<StorageHealthStatus>;
   uploadObject?(fileKey: string, body: Buffer | Uint8Array, mimeType: string): Promise<void>;
+  getObjectStream?(fileKey: string): Promise<Readable>;
 }
