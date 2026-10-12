@@ -203,9 +203,10 @@ assert(
 
 // 7. Security Audit Gate & Baseline Verification
 console.log('\n▶ Category 7: Security Audit Gate & Advisory Verification');
-const { BASELINE_TRACKED_ADVISORIES, evaluateAuditGate } = require(
+const { BASELINE_TRACKED_SEVERITIES, BASELINE_TRACKED_ADVISORIES, evaluateAuditGate } = require(
   path.join(rootDir, 'scripts/testing/audit-report.js'),
 );
+assert(typeof BASELINE_TRACKED_SEVERITIES === 'object', 'BASELINE_TRACKED_SEVERITIES map exported');
 assert(Array.isArray(BASELINE_TRACKED_ADVISORIES), 'BASELINE_TRACKED_ADVISORIES exported');
 assert(typeof evaluateAuditGate === 'function', 'evaluateAuditGate evaluator function exported');
 
@@ -215,7 +216,7 @@ const mockUntracked = {
   advisories: { 1: { id: 'GHSA-untracked-cve', severity: 'high' } },
 };
 assert(
-  evaluateAuditGate(mockUntracked, BASELINE_TRACKED_ADVISORIES).isPassing === false,
+  evaluateAuditGate(mockUntracked, BASELINE_TRACKED_SEVERITIES).isPassing === false,
   'Audit gate fails closed on untracked vulnerabilities',
 );
 
@@ -224,8 +225,26 @@ const mockCritical = {
   advisories: { 1: { id: 'GHSA-p293-qw3h-jr36', severity: 'critical' } },
 };
 assert(
-  evaluateAuditGate(mockCritical, BASELINE_TRACKED_ADVISORIES).isPassing === false,
+  evaluateAuditGate(mockCritical, BASELINE_TRACKED_SEVERITIES).isPassing === false,
   'Audit gate fails closed on critical vulnerabilities',
+);
+
+// Behavioral verification: gate fails on severity escalation
+const mockEscalated = {
+  metadata: { vulnerabilities: { critical: 0, high: 1, moderate: 0, low: 0 } },
+  advisories: {
+    1: { id: 'GHSA-36xv-jgw5-4q75', severity: 'high' }, // Approved as moderate
+  },
+};
+assert(
+  evaluateAuditGate(mockEscalated, BASELINE_TRACKED_SEVERITIES).isPassing === false,
+  'Audit gate fails closed on severity escalation above approved baseline',
+);
+
+// Behavioral verification: gate fails on missing or malformed data
+assert(
+  evaluateAuditGate(null).isPassing === false && evaluateAuditGate({}).isPassing === false,
+  'Audit gate fails closed on missing or malformed audit data',
 );
 
 const auditReportPath = path.join(rootDir, 'reports/security-audit-report.json');

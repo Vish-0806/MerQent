@@ -1,40 +1,110 @@
 /**
  * MerQent Automated Dependency Security Audit Inspector
  * Parses pnpm audit output, catalogs CVE/GHSA advisories, generates structured reports,
- * and enforces strict security quality gates (fails on new or critical vulnerabilities).
+ * and enforces strict security quality gates:
+ * - Fails on untracked / new vulnerabilities (fail-closed)
+ * - Fails on severity escalation of tracked vulnerabilities above approved baseline
+ * - Fails on any Critical severity vulnerabilities (even if in baseline)
+ * - Fails on missing or malformed audit data
  */
 
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const BASELINE_TRACKED_ADVISORIES = [
-  'GHSA-36xv-jgw5-4q75', // @nestjs/core SSE injection (requires NestJS 11)
-  'GHSA-2g4f-4pwh-qvx6', // ajv ReDoS ($data) (transitive dev dependency)
-  'GHSA-vfj7-8cjw-p6xm', // braces stack-exhaustion (transitive dev dependency)
-];
+const SEVERITY_LEVELS = {
+  info: 0,
+  low: 1,
+  moderate: 2,
+  high: 3,
+  critical: 4,
+};
+
+const BASELINE_TRACKED_SEVERITIES = {
+  'GHSA-36xv-jgw5-4q75': 'moderate', // @nestjs/core SSE injection (requires NestJS 11)
+  'GHSA-2g4f-4pwh-qvx6': 'moderate', // ajv ReDoS ($data) (transitive dev dependency)
+  'GHSA-vfj7-8cjw-p6xm': 'high', // braces stack-exhaustion (transitive dev dependency)
+};
+
+const BASELINE_TRACKED_ADVISORIES = Object.keys(BASELINE_TRACKED_SEVERITIES);
+
+/**
+ * Normalizes baseline input into a map of { [advisoryId]: approvedSeverity }.
+ */
+function normalizeBaseline(baseline) {
+  if (Array.isArray(baseline)) {
+    const map = {};
+    for (const id of baseline) {
+      map[id] = BASELINE_TRACKED_SEVERITIES[id] || 'high';
+    }
+    return map;
+  }
+  if (baseline && typeof baseline === 'object') {
+    return baseline;
+  }
+  return BASELINE_TRACKED_SEVERITIES;
+}
 
 /**
  * Evaluates dependency security audit data against baseline constraints.
- * Fails closed if any untracked or critical vulnerability is detected.
+ * Fails closed if audit data is malformed, or if any untracked, escalated,
+ * or critical vulnerability is detected.
  */
-function evaluateAuditGate(auditData, baselineTracked = BASELINE_TRACKED_ADVISORIES) {
-  const advisories = Object.values(auditData?.advisories || {});
-  const metadata = auditData?.metadata || { vulnerabilities: {} };
-  const baselineSet = new Set(baselineTracked);
+function evaluateAuditGate(auditData, baseline = BASELINE_TRACKED_SEVERITIES) {
+  // Validate audit data integrity
+  if (
+    !auditData ||
+    typeof auditData !== 'object' ||
+    !auditData.advisories ||
+    typeof auditData.advisories !== 'object'
+  ) {
+    return {
+      isPassing: false,
+      error: 'Missing or malformed audit data: auditData.advisories must be a valid object',
+      advisories: [],
+      newAdvisories: [],
+      escalatedAdvisories: [],
+      criticalAdvisories: [],
+      metadata: {},
+    };
+  }
 
+  const baselineMap = normalizeBaseline(baseline);
+  const advisories = Object.values(auditData.advisories || {});
+  const metadata = auditData.metadata || { vulnerabilities: {} };
+
+  // 1. Detect untracked / newly introduced advisories
   const newAdvisories = advisories.filter((a) => {
     const id = a.github_advisory_id || a.id;
-    return !baselineSet.has(id);
+    return !Object.prototype.hasOwnProperty.call(baselineMap, id);
   });
 
-  const criticalAdvisories = advisories.filter((a) => a.severity === 'critical');
-  const isPassing = newAdvisories.length === 0 && criticalAdvisories.length === 0;
+  // 2. Detect severity escalations above approved baseline
+  const escalatedAdvisories = advisories.filter((a) => {
+    const id = a.github_advisory_id || a.id;
+    const approvedSeverity = baselineMap[id];
+    if (!approvedSeverity) return false; // Already handled by newAdvisories
+
+    const currentLevel = SEVERITY_LEVELS[String(a.severity).toLowerCase()] ?? 0;
+    const approvedLevel = SEVERITY_LEVELS[String(approvedSeverity).toLowerCase()] ?? 0;
+    return currentLevel > approvedLevel;
+  });
+
+  // 3. Detect critical severity advisories (zero tolerance, even if tracked)
+  const criticalAdvisories = advisories.filter(
+    (a) => String(a.severity).toLowerCase() === 'critical',
+  );
+
+  const isPassing =
+    newAdvisories.length === 0 &&
+    escalatedAdvisories.length === 0 &&
+    criticalAdvisories.length === 0;
 
   return {
     isPassing,
     advisories,
     newAdvisories,
+    escalatedAdvisories,
     criticalAdvisories,
     metadata,
   };
@@ -64,10 +134,20 @@ function runAudit() {
     }
   }
 
-  const { isPassing, advisories, newAdvisories, criticalAdvisories, metadata } = evaluateAuditGate(
-    auditData,
-    BASELINE_TRACKED_ADVISORIES,
-  );
+  const {
+    isPassing,
+    error,
+    advisories,
+    newAdvisories,
+    escalatedAdvisories,
+    criticalAdvisories,
+    metadata,
+  } = evaluateAuditGate(auditData, BASELINE_TRACKED_SEVERITIES);
+
+  if (error) {
+    console.error(`\n❌ Audit Data Integrity Error: ${error}`);
+    process.exit(1);
+  }
 
   console.log(`Total Advisories Detected: ${advisories.length}`);
   console.log(`Severity Breakdown:`);
@@ -85,16 +165,21 @@ function runAudit() {
     advisoriesCount: advisories.length,
     vulnerabilities: metadata.vulnerabilities || {},
     affectedModules: Array.from(affectedModules),
+    baselineTrackedSeverities: BASELINE_TRACKED_SEVERITIES,
     baselineTrackedAdvisories: BASELINE_TRACKED_ADVISORIES,
-    advisories: advisories.map((a) => ({
-      id: a.github_advisory_id || a.id,
-      module: a.module_name,
-      title: a.title,
-      severity: a.severity,
-      url: a.url,
-      vulnerableVersions: a.vulnerable_versions,
-      patchedVersions: a.patched_versions,
-    })),
+    advisories: advisories.map((a) => {
+      const id = a.github_advisory_id || a.id;
+      return {
+        id,
+        module: a.module_name,
+        title: a.title,
+        severity: a.severity,
+        baselineSeverity: BASELINE_TRACKED_SEVERITIES[id] || null,
+        url: a.url,
+        vulnerableVersions: a.vulnerable_versions,
+        patchedVersions: a.patched_versions,
+      };
+    }),
   };
 
   const outputDir = path.join(__dirname, '../../reports');
@@ -108,10 +193,12 @@ function runAudit() {
   if (advisories.length > 0) {
     console.log('\n⚠️  Active vulnerabilities detected:');
     advisories.forEach((a) => {
-      const isTracked = BASELINE_TRACKED_ADVISORIES.includes(a.github_advisory_id || a.id);
-      const tag = isTracked ? '[TRACKED BASELINE]' : '[NEW/UNTRACKED]';
+      const id = a.github_advisory_id || a.id;
+      const approvedSev = BASELINE_TRACKED_SEVERITIES[id];
+      const tag = approvedSev ? '[TRACKED BASELINE]' : '[NEW/UNTRACKED]';
+      const baselineNote = approvedSev ? ` (Approved Baseline: ${approvedSev.toUpperCase()})` : '';
       console.log(
-        `   ${tag} [${a.severity.toUpperCase()}] ${a.module_name}: ${a.title} (${a.github_advisory_id || a.id})`,
+        `   ${tag} [${String(a.severity).toUpperCase()}] ${a.module_name}: ${a.title} (${id})${baselineNote}`,
       );
     });
   } else {
@@ -133,11 +220,23 @@ function runAudit() {
         console.error(`     * ${a.github_advisory_id || a.id} (${a.module_name})`);
       });
     }
+    if (escalatedAdvisories.length > 0) {
+      console.error(
+        `   - ${escalatedAdvisories.length} vulnerability advisory(ies) ESCALATED above approved baseline severity:`,
+      );
+      escalatedAdvisories.forEach((a) => {
+        const id = a.github_advisory_id || a.id;
+        const approvedSev = BASELINE_TRACKED_SEVERITIES[id];
+        console.error(
+          `     * ${id} (${a.module_name}): current severity [${String(a.severity).toUpperCase()}] exceeds approved [${String(approvedSev).toUpperCase()}]`,
+        );
+      });
+    }
     process.exit(1);
   }
 
   console.log(
-    '\n✅ Security Audit Quality Gate PASSED (all active findings are verified tracked baselines, 0 criticals).',
+    '\n✅ Security Audit Quality Gate PASSED (all active findings match verified baseline severities, 0 criticals).',
   );
   process.exit(0);
 }
@@ -147,6 +246,8 @@ if (require.main === module) {
 }
 
 module.exports = {
+  SEVERITY_LEVELS,
+  BASELINE_TRACKED_SEVERITIES,
   BASELINE_TRACKED_ADVISORIES,
   evaluateAuditGate,
 };
