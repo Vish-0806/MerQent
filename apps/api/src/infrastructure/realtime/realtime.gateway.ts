@@ -25,6 +25,7 @@ import {
   REALTIME_NAMESPACE,
   ROOM_PREFIX_USER,
   ROOM_PREFIX_FIRM,
+  ROOM_PREFIX_PROJECT,
   WS_MAX_CONNECTIONS_PER_USER,
   WS_RATE_LIMIT_WINDOW_MS,
   WS_RATE_LIMIT_MAX_EVENTS,
@@ -188,7 +189,11 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
         return;
       }
 
-      const verifiedFirmId = user.firmMember?.firmId || payload.firmId;
+      // Only permit firmId from database ground-truth (user.firmMember)
+      // Platform admins may optionally inherit payload firmId if specified, but regular users strictly require DB relationship.
+      const verifiedFirmId =
+        user.firmMember?.firmId ||
+        (user.role === UserRole.PLATFORM_ADMIN ? payload.firmId : undefined);
 
       // 5. Attach authenticated user principal to socket data
       const authUser: WsAuthenticatedUser = {
@@ -259,10 +264,10 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
    * Handles explicit room join requests with ground-truth access validation.
    */
   @SubscribeMessage(RealtimeEvent.ROOM_JOIN)
-  handleJoinRoom(
+  async handleJoinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() body: unknown,
-  ): { event: string; roomId?: string } | void {
+  ): Promise<{ event: string; roomId?: string } | void> {
     if (!this.checkRateLimit(client)) {
       client.emit(RealtimeEvent.ERROR, {
         code: ErrorCode.WS_RATE_LIMIT_EXCEEDED,
@@ -293,7 +298,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
 
     // Verify room authorization server-side
-    const isAuthorized = this.isUserAuthorizedForRoom(user, roomId);
+    const isAuthorized = await this.isUserAuthorizedForRoom(user, roomId);
     if (!isAuthorized) {
       this.logger.warn(
         `SECURITY ALERT: User ${user.id} denied access to room '${roomId}' (unauthorized room subscription attempt)`,
@@ -357,7 +362,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   /**
-   * Handles client heartbeat with dynamic token revocation checks.
+   * Handles client heartbeat with dynamic token revocation and session expiration checks.
    */
   @SubscribeMessage(RealtimeEvent.HEARTBEAT)
   async handleHeartbeat(
@@ -373,15 +378,60 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       return;
     }
 
-    // Verify token revocation status in Redis during active heartbeat
     const token = client.data.token;
-    if (token && this.redisService) {
+    if (!token) {
+      client.emit(RealtimeEvent.ERROR, {
+        code: ErrorCode.WS_UNAUTHORIZED,
+        message: 'Missing session token',
+      });
+      client.disconnect(true);
+      return;
+    }
+
+    // 1. Verify token signature & expiry during active heartbeat
+    const secret = this.configService.get<string>('jwt.secret');
+    try {
+      await this.jwtService.verifyAsync(token, { secret });
+    } catch (err: unknown) {
+      this.logger.warn(
+        `Active connection expired during heartbeat: socket=${client.id}: ${(err as Error).message}`,
+      );
+      client.emit(RealtimeEvent.ERROR, {
+        code: ErrorCode.WS_AUTHENTICATION_FAILED,
+        message: 'Session token has expired',
+      });
+      client.disconnect(true);
+      return;
+    }
+
+    // 2. Verify token revocation status in Redis during active heartbeat
+    if (this.redisService) {
       const isRevoked = await this.redisService.isTokenBlacklisted(token);
       if (isRevoked) {
         this.logger.warn(`Active connection revoked during heartbeat: socket=${client.id}`);
         client.emit(RealtimeEvent.ERROR, {
           code: ErrorCode.WS_UNAUTHORIZED,
           message: 'Session has been revoked',
+        });
+        client.disconnect(true);
+        return;
+      }
+    }
+
+    // 3. Verify user status in database ground-truth
+    const user: WsAuthenticatedUser | undefined = client.data.user;
+    if (user) {
+      const dbUser = await this.prisma.user.findUnique({
+        where: { id: user.id },
+        select: { status: true },
+      });
+      if (!dbUser || dbUser.status !== UserStatus.ACTIVE) {
+        this.logger.warn(
+          `User account is no longer active during heartbeat: socket=${client.id}, userId=${user.id}`,
+        );
+        client.emit(RealtimeEvent.ERROR, {
+          code: ErrorCode.ACCOUNT_SUSPENDED,
+          message: 'User account is not active',
         });
         client.disconnect(true);
         return;
@@ -475,7 +525,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     return trimmed;
   }
 
-  private isUserAuthorizedForRoom(user: WsAuthenticatedUser, roomId: string): boolean {
+  private async isUserAuthorizedForRoom(user: WsAuthenticatedUser, roomId: string): Promise<boolean> {
     // Platform admin has access to all rooms
     if (user.role === UserRole.PLATFORM_ADMIN) {
       return true;
@@ -490,7 +540,17 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     // Firm room: user can only join their own firm room
     if (roomId.startsWith(ROOM_PREFIX_FIRM)) {
       const targetFirmId = roomId.slice(ROOM_PREFIX_FIRM.length);
-      return user.firmId === targetFirmId;
+      return Boolean(user.firmId && user.firmId === targetFirmId);
+    }
+
+    // Project room: user must belong to the firm that owns the project
+    if (roomId.startsWith(ROOM_PREFIX_PROJECT)) {
+      const targetProjectId = roomId.slice(ROOM_PREFIX_PROJECT.length);
+      const project = await this.prisma.project.findUnique({
+        where: { id: targetProjectId },
+        select: { firmId: true },
+      });
+      return Boolean(project && user.firmId && project.firmId === user.firmId);
     }
 
     // Unknown or unformatted rooms are denied by default

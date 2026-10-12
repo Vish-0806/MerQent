@@ -1,10 +1,11 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { RealtimeGateway } from './realtime.gateway';
 import { RedisIoAdapter } from './redis-io.adapter';
 import { RealtimeHealthStatus } from '@merqent/shared-types';
 
 @Injectable()
 export class RealtimeService {
+  private readonly logger = new Logger(RealtimeService.name);
   private redisAdapter: RedisIoAdapter | null = null;
 
   constructor(
@@ -20,10 +21,22 @@ export class RealtimeService {
     this.redisAdapter = adapter;
   }
 
+  private warnIfDegraded(event: string, target: string): void {
+    if (this.redisAdapter) {
+      const { isConnected, adapterType } = this.redisAdapter.getStatus();
+      if (adapterType === 'redis' && !isConnected) {
+        this.logger.warn(
+          `Degraded realtime delivery: Redis adapter is disconnected. Event '${event}' for target '${target}' is delivered to local node only; cross-cluster propagation is unavailable.`,
+        );
+      }
+    }
+  }
+
   /**
    * Emits a typed event to all active sockets of a specific user.
    */
   emitToUser(userId: string, event: string, payload: unknown): void {
+    this.warnIfDegraded(event, `user:${userId}`);
     this.gateway.emitToUser(userId, event, payload);
   }
 
@@ -31,6 +44,7 @@ export class RealtimeService {
    * Emits a typed event to all active sockets within a verified firm room.
    */
   emitToFirm(firmId: string, event: string, payload: unknown): void {
+    this.warnIfDegraded(event, `firm:${firmId}`);
     this.gateway.emitToFirm(firmId, event, payload);
   }
 
@@ -38,6 +52,7 @@ export class RealtimeService {
    * Emits a typed event to an authorized arbitrary room.
    */
   emitToRoom(roomId: string, event: string, payload: unknown): void {
+    this.warnIfDegraded(event, roomId);
     this.gateway.emitToRoom(roomId, event, payload);
   }
 

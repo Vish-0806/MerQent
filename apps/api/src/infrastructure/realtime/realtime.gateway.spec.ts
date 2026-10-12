@@ -21,6 +21,9 @@ describe('RealtimeGateway', () => {
     user: {
       findUnique: jest.Mock;
     };
+    project: {
+      findUnique: jest.Mock;
+    };
   };
   let mockRedis: jest.Mocked<Partial<RedisService>>;
   let mockServer: {
@@ -51,6 +54,7 @@ describe('RealtimeGateway', () => {
 
   const validUserId = 'c1234567-89ab-cdef-0123-456789abcdef';
   const validFirmId = 'f1234567-89ab-cdef-0123-456789abcdef';
+  const validProjectId = 'p1234567-89ab-cdef-0123-456789abcdef';
 
   beforeEach(async () => {
     mockJwtService = {
@@ -80,6 +84,12 @@ describe('RealtimeGateway', () => {
           firmMember: {
             firmId: validFirmId,
           },
+        }),
+      },
+      project: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: validProjectId,
+          firmId: validFirmId,
         }),
       },
     };
@@ -251,6 +261,21 @@ describe('RealtimeGateway', () => {
       );
       expect(mockSocket.disconnect).toHaveBeenCalledWith(true);
     });
+
+    it('ignores stale payload.firmId when user has no firmMember in database ground-truth', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: validUserId,
+        email: 'consultant@merqent.com',
+        role: UserRole.CONSULTANT_OPERATOR,
+        status: UserStatus.ACTIVE,
+        firmMember: null,
+      });
+
+      await gateway.handleConnection(mockSocket as unknown as Socket);
+
+      expect(mockSocket.data.user?.firmId).toBeUndefined();
+      expect(mockSocket.join).not.toHaveBeenCalledWith(expect.stringMatching(/^firm:/));
+    });
   });
 
   describe('handleDisconnect', () => {
@@ -269,8 +294,8 @@ describe('RealtimeGateway', () => {
       await gateway.handleConnection(mockSocket as unknown as Socket);
     });
 
-    it('allows user to join their own verified firm room', () => {
-      const result = gateway.handleJoinRoom(mockSocket as unknown as Socket, {
+    it('allows user to join their own verified firm room', async () => {
+      const result = await gateway.handleJoinRoom(mockSocket as unknown as Socket, {
         roomId: `firm:${validFirmId}`,
       });
 
@@ -285,10 +310,10 @@ describe('RealtimeGateway', () => {
       );
     });
 
-    it('denies access with WS_ROOM_JOIN_DENIED when attempting to join another firm room', () => {
+    it('denies access with WS_ROOM_JOIN_DENIED when attempting to join another firm room', async () => {
       const targetOtherFirm = 'f9999999-9999-9999-9999-999999999999';
 
-      gateway.handleJoinRoom(mockSocket as unknown as Socket, {
+      await gateway.handleJoinRoom(mockSocket as unknown as Socket, {
         roomId: `firm:${targetOtherFirm}`,
       });
 
@@ -298,10 +323,10 @@ describe('RealtimeGateway', () => {
       );
     });
 
-    it('denies access when attempting to join another user private room', () => {
+    it('denies access when attempting to join another user private room', async () => {
       const otherUser = 'c9999999-9999-9999-9999-999999999999';
 
-      gateway.handleJoinRoom(mockSocket as unknown as Socket, {
+      await gateway.handleJoinRoom(mockSocket as unknown as Socket, {
         roomId: `user:${otherUser}`,
       });
 
@@ -311,12 +336,53 @@ describe('RealtimeGateway', () => {
       );
     });
 
-    it('allows PLATFORM_ADMIN to join any room for administrative monitoring', () => {
+    it('allows user to join project room if their firm owns the project', async () => {
+      const result = await gateway.handleJoinRoom(mockSocket as unknown as Socket, {
+        roomId: `project:${validProjectId}`,
+      });
+
+      expect(result).toEqual({
+        event: RealtimeEvent.ROOM_JOINED,
+        roomId: `project:${validProjectId}`,
+      });
+      expect(mockSocket.join).toHaveBeenCalledWith(`project:${validProjectId}`);
+    });
+
+    it('denies access to project room if project belongs to another firm', async () => {
+      mockPrisma.project.findUnique.mockResolvedValueOnce({
+        id: 'p-other-project',
+        firmId: 'f-other-firm',
+      });
+
+      await gateway.handleJoinRoom(mockSocket as unknown as Socket, {
+        roomId: 'project:p-other-project',
+      });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        RealtimeEvent.ERROR,
+        expect.objectContaining({ code: ErrorCode.WS_ROOM_JOIN_DENIED }),
+      );
+    });
+
+    it('denies access to project room if project does not exist', async () => {
+      mockPrisma.project.findUnique.mockResolvedValueOnce(null);
+
+      await gateway.handleJoinRoom(mockSocket as unknown as Socket, {
+        roomId: 'project:non-existent-project',
+      });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        RealtimeEvent.ERROR,
+        expect.objectContaining({ code: ErrorCode.WS_ROOM_JOIN_DENIED }),
+      );
+    });
+
+    it('allows PLATFORM_ADMIN to join any room for administrative monitoring', async () => {
       if (mockSocket.data.user) {
         mockSocket.data.user.role = UserRole.PLATFORM_ADMIN;
       }
 
-      const result = gateway.handleJoinRoom(mockSocket as unknown as Socket, {
+      const result = await gateway.handleJoinRoom(mockSocket as unknown as Socket, {
         roomId: 'firm:arbitrary-firm-123',
       });
 
@@ -327,8 +393,8 @@ describe('RealtimeGateway', () => {
       expect(mockSocket.join).toHaveBeenCalledWith('firm:arbitrary-firm-123');
     });
 
-    it('rejects invalid payload schema (missing roomId)', () => {
-      gateway.handleJoinRoom(mockSocket as unknown as Socket, {});
+    it('rejects invalid payload schema (missing roomId)', async () => {
+      await gateway.handleJoinRoom(mockSocket as unknown as Socket, {});
 
       expect(mockSocket.emit).toHaveBeenCalledWith(
         RealtimeEvent.ERROR,
@@ -381,6 +447,32 @@ describe('RealtimeGateway', () => {
       expect(mockSocket.emit).toHaveBeenCalledWith(
         RealtimeEvent.ERROR,
         expect.objectContaining({ code: ErrorCode.WS_UNAUTHORIZED }),
+      );
+      expect(mockSocket.disconnect).toHaveBeenCalledWith(true);
+    });
+
+    it('disconnects active socket if token expired during active connection', async () => {
+      (mockJwtService.verifyAsync as jest.Mock).mockRejectedValueOnce(new Error('jwt expired'));
+
+      await gateway.handleHeartbeat(mockSocket as unknown as Socket, { timestamp: Date.now() });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        RealtimeEvent.ERROR,
+        expect.objectContaining({ code: ErrorCode.WS_AUTHENTICATION_FAILED }),
+      );
+      expect(mockSocket.disconnect).toHaveBeenCalledWith(true);
+    });
+
+    it('disconnects active socket if user account became suspended during active session', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        status: UserStatus.SUSPENDED,
+      });
+
+      await gateway.handleHeartbeat(mockSocket as unknown as Socket, { timestamp: Date.now() });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        RealtimeEvent.ERROR,
+        expect.objectContaining({ code: ErrorCode.ACCOUNT_SUSPENDED }),
       );
       expect(mockSocket.disconnect).toHaveBeenCalledWith(true);
     });
