@@ -388,7 +388,21 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       return;
     }
 
-    // 1. Verify token signature & expiry during active heartbeat
+    // 1. Verify token revocation status in Redis during active heartbeat
+    if (this.redisService) {
+      const isRevoked = await this.redisService.isTokenBlacklisted(token);
+      if (isRevoked) {
+        this.logger.warn(`Active connection revoked during heartbeat: socket=${client.id}`);
+        client.emit(RealtimeEvent.ERROR, {
+          code: ErrorCode.WS_UNAUTHORIZED,
+          message: 'Session has been revoked',
+        });
+        client.disconnect(true);
+        return;
+      }
+    }
+
+    // 2. Verify token signature & expiry during active heartbeat
     const secret = this.configService.get<string>('jwt.secret');
     try {
       await this.jwtService.verifyAsync(token, { secret });
@@ -402,20 +416,6 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       });
       client.disconnect(true);
       return;
-    }
-
-    // 2. Verify token revocation status in Redis during active heartbeat
-    if (this.redisService) {
-      const isRevoked = await this.redisService.isTokenBlacklisted(token);
-      if (isRevoked) {
-        this.logger.warn(`Active connection revoked during heartbeat: socket=${client.id}`);
-        client.emit(RealtimeEvent.ERROR, {
-          code: ErrorCode.WS_UNAUTHORIZED,
-          message: 'Session has been revoked',
-        });
-        client.disconnect(true);
-        return;
-      }
     }
 
     // 3. Verify user status in database ground-truth

@@ -160,7 +160,7 @@ describe('Cross-Module Integration: Security, RBAC & Multi-Tenant Isolation', ()
       };
 
       // Attempt to join firmTwo room
-      const result = realtimeGateway.handleJoinRoom(socket as unknown as Socket, {
+      const result = await realtimeGateway.handleJoinRoom(socket as unknown as Socket, {
         roomId: `firm:${firmTwoId}`,
       });
 
@@ -185,7 +185,7 @@ describe('Cross-Module Integration: Security, RBAC & Multi-Tenant Isolation', ()
         },
       };
 
-      const result = realtimeGateway.handleJoinRoom(adminSocket as unknown as Socket, {
+      const result = await realtimeGateway.handleJoinRoom(adminSocket as unknown as Socket, {
         roomId: `firm:${firmTwoId}`,
       });
 
@@ -199,7 +199,11 @@ describe('Cross-Module Integration: Security, RBAC & Multi-Tenant Isolation', ()
 
   describe('3. Cross-Module Token Revocation Propagation', () => {
     it('immediately disconnects active WebSocket session on token revocation during heartbeat', async () => {
-      const validToken = 'revoked-test-jwt-token';
+      const validToken = await jwtService.signAsync({
+        sub: userFirmOne.id,
+        role: userFirmOne.role,
+        type: 'access',
+      });
       const socket = createMockSocket('sock-user-1');
       socket.handshake.auth.token = validToken;
       socket.data = {
