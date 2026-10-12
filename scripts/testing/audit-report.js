@@ -50,11 +50,9 @@ const report = {
   vulnerabilities: metadata.vulnerabilities || {},
   affectedModules: Array.from(affectedModules),
   baselineTrackedAdvisories: [
-    'GHSA-p293-qw3h-jr36', // Next.js Windows RCE (CVE-2026-75604)
-    'GHSA-4c39-4ccg-62r3',
-    'GHSA-955p-x3mx-jcvp',
-    'GHSA-3g8h-86w9-wvmq',
-    'GHSA-vfv6-92ff-j949',
+    'GHSA-36xv-jgw5-4q75', // @nestjs/core SSE injection (requires NestJS 11)
+    'GHSA-2g4f-4pwh-qvx6', // ajv ReDoS ($data) (transitive dev dependency)
+    'GHSA-vfj7-8cjw-p6xm', // braces stack-exhaustion (transitive dev dependency)
   ],
   advisories: advisories.map((a) => ({
     id: a.github_advisory_id || a.id,
@@ -77,9 +75,11 @@ console.log(`\n📄 Report written to: ${outputPath}`);
 
 if (advisories.length > 0) {
   console.log('⚠️  Known baseline vulnerabilities remain active and tracked.');
-  console.log(
-    '   In production, Next.js Windows RCE is mitigated via Linux containerization (node:20-alpine).',
-  );
+  if (advisories.some((a) => a.module_name === 'next')) {
+    console.log(
+      '   In production, Next.js Windows RCE is mitigated via Linux containerization (node:20-alpine).',
+    );
+  }
 } else {
   console.log('✅ No vulnerabilities found!');
 }
