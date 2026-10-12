@@ -121,12 +121,27 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      clamav:
+        image: clamav/clamav:stable
+        env:
+          CLAMAV_NO_FRESHCLAM: "true"
+        ports:
+          - 3310:3310
+        options: >-
+          --health-cmd "clamdscan --ping 5"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 15
+          --health-start-period 30s
 
     env:
       DATABASE_URL: postgresql://merqent_user:merqent_dev_password@localhost:5432/merqent_db?schema=public
       REDIS_HOST: localhost
       REDIS_PORT: '6379'
       STORAGE_DRIVER: local
+      MALWARE_SCANNER_ENABLED: 'true'
+      CLAMAV_HOST: localhost
+      CLAMAV_PORT: '3310'
       JWT_ACCESS_SECRET: replace_with_minimum_64_character_cryptographically_secure_random_key
       JWT_REFRESH_SECRET: replace_with_minimum_64_character_cryptographically_secure_random_key
 
