@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
           version: 9.5.0
 
@@ -40,6 +40,9 @@ jobs:
 
       - name: Install Monorepo Dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm prisma:generate
 
       - name: Validate Environment Schema (.env.example)
         run: node --env-file=.env.example scripts/validate-env.js
@@ -65,7 +68,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
           version: 9.5.0
 
@@ -122,7 +125,7 @@ jobs:
       DATABASE_URL: postgresql://merqent_user:merqent_dev_password@localhost:5432/merqent_db?schema=public
       REDIS_HOST: localhost
       REDIS_PORT: '6379'
-      STORAGE_DRIVER: memory
+      STORAGE_DRIVER: local
       JWT_ACCESS_SECRET: replace_with_minimum_64_character_cryptographically_secure_random_key
       JWT_REFRESH_SECRET: replace_with_minimum_64_character_cryptographically_secure_random_key
 
@@ -131,7 +134,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
           version: 9.5.0
 
@@ -173,7 +176,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
           version: 9.5.0
 
@@ -234,7 +237,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
           version: 9.5.0
 
@@ -242,7 +245,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
 
       - name: Generate Structured Advisory Report
         run: node scripts/testing/audit-report.js

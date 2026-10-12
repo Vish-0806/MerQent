@@ -15,7 +15,7 @@
     "prisma:status": "prisma migrate status --schema=../../prisma/schema.prisma",
     "prisma:studio": "prisma studio --schema=../../prisma/schema.prisma",
     "test": "jest",
-    "test:unit": "jest --testPathIgnorePatterns=test-integration --testPathIgnorePatterns=test-e2e",
+    "test:unit": "jest --testPathIgnorePatterns=test-integration --testPathIgnorePatterns=test-e2e --testPathIgnorePatterns=integration",
     "test:integration": "jest \"src/test-integration\"",
     "test:e2e": "jest \"src/test-e2e\"",
     "test:coverage": "jest --coverage",

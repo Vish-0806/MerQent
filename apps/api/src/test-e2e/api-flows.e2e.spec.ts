@@ -12,6 +12,7 @@ import {
   createMockMalwareScanner,
 } from '../test-utils';
 import { UserRole, ErrorCode } from '@merqent/shared-types';
+import { JobsService } from '../infrastructure/jobs/jobs.service';
 
 import { AllExceptionsFilter } from '../common/filters/http-exception.filter';
 
@@ -61,6 +62,19 @@ describe('End-to-End API Workflows & Health Probes', () => {
       .useValue(mockStorage)
       .overrideProvider(MALWARE_SCANNER_TOKEN)
       .useValue(mockScanner)
+      .overrideProvider(JobsService)
+      .useValue({
+        onModuleInit: jest.fn(),
+        onModuleDestroy: jest.fn(),
+        beforeApplicationShutdown: jest.fn(),
+        checkHealth: jest.fn().mockResolvedValue({
+          queueName: 'file-processing',
+          status: 'healthy',
+          activeJobs: 0,
+          waitingJobs: 0,
+          failedJobs: 0,
+        }),
+      })
       .compile();
 
     app = moduleRef.createNestApplication();

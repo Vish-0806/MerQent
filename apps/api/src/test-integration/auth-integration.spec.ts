@@ -6,9 +6,9 @@ import { UserRole } from '@merqent/shared-types';
 import Redis from 'ioredis';
 import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
-import { AuthService } from './auth.service';
-import { RedisService } from '../../infrastructure/redis/redis.service';
-import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { AuthService } from '../modules/auth/auth.service';
+import { RedisService } from '../infrastructure/redis/redis.service';
+import { PrismaService } from '../infrastructure/database/prisma.service';
 
 describe('Live Database & Redis Auth Integration (Task 2.8)', () => {
   let prisma: PrismaClient;
@@ -23,17 +23,23 @@ describe('Live Database & Redis Auth Integration (Task 2.8)', () => {
 
   beforeAll(async () => {
     jest.setTimeout(30000);
+    const dbUrl =
+      process.env.DATABASE_URL ||
+      'postgresql://merqent_user:merqent_dev_password@localhost:5432/merqent_db?schema=public';
     prisma = new PrismaClient({
       datasources: {
         db: {
-          url: 'postgresql://merqent_user:merqent_dev_password@localhost:5433/merqent_db?schema=public',
+          url: dbUrl,
         },
       },
     });
 
+    const redisHost = process.env.REDIS_HOST || 'localhost';
+    const redisPort = process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT, 10) : 6379;
+
     redis = new Redis({
-      host: 'localhost',
-      port: 6379,
+      host: redisHost,
+      port: redisPort,
       lazyConnect: true,
     });
 
@@ -51,8 +57,8 @@ describe('Live Database & Redis Auth Integration (Task 2.8)', () => {
           'jwt.expiresIn': '15m',
           'jwt.refreshSecret': 'test-refresh-secret-32-chars-long-minimum-key',
           'jwt.refreshExpiresIn': '7d',
-          'redis.host': 'localhost',
-          'redis.port': 6379,
+          'redis.host': redisHost,
+          'redis.port': redisPort,
         };
         return conf[key] ?? defaultValue;
       },
