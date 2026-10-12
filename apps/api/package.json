@@ -17,7 +17,7 @@
     "test": "jest",
     "test:unit": "jest --testPathIgnorePatterns=test-integration --testPathIgnorePatterns=test-e2e --testPathIgnorePatterns=integration",
     "test:integration": "jest \"src/test-integration\"",
-    "test:e2e": "jest \"src/test-e2e\"",
+    "test:e2e": "jest \"src/test-e2e\" --runInBand --forceExit",
     "test:coverage": "jest --coverage",
     "typecheck": "tsc --noEmit"
   },

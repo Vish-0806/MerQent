@@ -101,6 +101,10 @@ describe('End-to-End API Workflows & Health Probes', () => {
 
   afterAll(async () => {
     if (app) {
+      const server = app.getHttpServer();
+      if (server && typeof server.close === 'function') {
+        server.close();
+      }
       await app.close();
     }
   });

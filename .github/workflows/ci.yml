@@ -166,7 +166,17 @@ jobs:
         run: pnpm test:integration
 
       - name: Run End-to-End API Workflows
-        run: pnpm test:e2e
+        run: |
+          set -o pipefail
+          pnpm test:e2e 2>&1 | tee /tmp/e2e.log || {
+            ERR=$(grep -E "(FAIL|●|Error)" /tmp/e2e.log | head -n 10 | tr '\n' ' ')
+            echo "::error title=E2E Failure::$ERR"
+            echo "### E2E Test Failure Details" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            cat /tmp/e2e.log >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
 
   production-build:
     name: Production Artifact Compilation
