@@ -525,7 +525,10 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     return trimmed;
   }
 
-  private async isUserAuthorizedForRoom(user: WsAuthenticatedUser, roomId: string): Promise<boolean> {
+  private async isUserAuthorizedForRoom(
+    user: WsAuthenticatedUser,
+    roomId: string,
+  ): Promise<boolean> {
     // Platform admin has access to all rooms
     if (user.role === UserRole.PLATFORM_ADMIN) {
       return true;
