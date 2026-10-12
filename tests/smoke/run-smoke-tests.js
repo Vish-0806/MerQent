@@ -201,6 +201,35 @@ assert(
   'API E2E workflow test suite exists',
 );
 
+// 7. Security Audit Gate & Baseline Verification
+console.log('\n▶ Category 7: Security Audit Gate & Advisory Verification');
+const { BASELINE_TRACKED_ADVISORIES, evaluateAuditGate } = require(
+  path.join(rootDir, 'scripts/testing/audit-report.js'),
+);
+assert(Array.isArray(BASELINE_TRACKED_ADVISORIES), 'BASELINE_TRACKED_ADVISORIES exported');
+assert(typeof evaluateAuditGate === 'function', 'evaluateAuditGate evaluator function exported');
+
+const auditReportPath = path.join(rootDir, 'reports/security-audit-report.json');
+assert(fs.existsSync(auditReportPath), 'Security audit report artifact exists');
+if (fs.existsSync(auditReportPath)) {
+  const auditReport = JSON.parse(fs.readFileSync(auditReportPath, 'utf-8'));
+  assert(auditReport.vulnerabilities.critical === 0, 'Active critical vulnerabilities count is 0');
+  const activeIds = auditReport.advisories.map((a) => a.id);
+  assert(!activeIds.includes('GHSA-p293-qw3h-jr36'), 'GHSA-p293-qw3h-jr36 is absent');
+  assert(!activeIds.includes('GHSA-2xp9-vwfh-vxw4'), 'GHSA-2xp9-vwfh-vxw4 is absent');
+  assert(!activeIds.includes('GHSA-89xv-2m56-2m9x'), 'GHSA-89xv-2m56-2m9x is absent');
+}
+
+// Behavioral verification: gate fails on untracked or critical finding
+const mockUntracked = {
+  metadata: { vulnerabilities: { critical: 0, high: 1, moderate: 0, low: 0 } },
+  advisories: { 1: { id: 'GHSA-untracked-cve', severity: 'high' } },
+};
+assert(
+  evaluateAuditGate(mockUntracked, BASELINE_TRACKED_ADVISORIES).isPassing === false,
+  'Audit gate fails closed on untracked vulnerabilities',
+);
+
 console.log('\n═══════════════════════════════════════════════════════════════════');
 console.log(`  RESULTS: ${passCount} Passed, ${failCount} Failed`);
 console.log('═══════════════════════════════════════════════════════════════════\n');
