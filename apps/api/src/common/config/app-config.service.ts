@@ -32,6 +32,14 @@ export class AppConfigService {
     );
   }
 
+  get metricsScrapeKey(): string {
+    return (
+      this.config.get<string>('observability.metricsScrapeKey') ||
+      process.env.METRICS_SCRAPE_KEY ||
+      ''
+    );
+  }
+
   get apiBaseUrl(): string {
     return this.config.get<string>('apiBaseUrl', 'http://localhost:4000');
   }

@@ -109,6 +109,7 @@ async function bootstrap() {
       'x-request-id',
       'x-correlation-id',
       'x-refresh-token',
+      'x-metrics-key',
       'Accept',
     ],
     exposedHeaders: ['x-correlation-id'],

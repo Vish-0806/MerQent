@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, BadRequestException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { AppModule } from '../app/app.module';
 import { PrismaService } from '../infrastructure/database/prisma.service';
 import { RedisService } from '../infrastructure/redis/redis.service';
@@ -44,6 +45,7 @@ describe('End-to-End API Workflows & Health Probes', () => {
   let mockRedis: ReturnType<typeof createMockRedisService>;
   let mockStorage: ReturnType<typeof createMockStorageService>;
   let mockScanner: ReturnType<typeof createMockMalwareScanner>;
+  let moduleRef: TestingModule;
 
   beforeAll(async () => {
     process.env.NODE_ENV = process.env.NODE_ENV || 'test';
@@ -63,7 +65,7 @@ describe('End-to-End API Workflows & Health Probes', () => {
     mockStorage = createMockStorageService();
     mockScanner = createMockMalwareScanner(true);
 
-    const moduleRef: TestingModule = await Test.createTestingModule({
+    moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     })
       .overrideProvider(PrismaService)
@@ -221,6 +223,99 @@ describe('End-to-End API Workflows & Health Probes', () => {
       // Verify defense-in-depth headers
       expect(res.headers.get('x-content-type-options')).toBe('nosniff');
       expect(res.headers.get('x-frame-options')).toBe('DENY');
+    });
+  });
+
+  describe('4. Metrics Endpoint Protection (/metrics)', () => {
+    const SCRAPER_KEY = 'test-m2m-scraper-key-1234567890';
+    let platformAdminToken: string;
+    let peFirmAdminToken: string;
+
+    beforeAll(async () => {
+      process.env.METRICS_SCRAPE_KEY = SCRAPER_KEY;
+      const jwtService = moduleRef.get(JwtService);
+      const secret =
+        process.env.JWT_ACCESS_SECRET ||
+        'replace_with_minimum_64_character_cryptographically_secure_random_key';
+
+      platformAdminToken = await jwtService.signAsync(
+        {
+          sub: 'usr-admin-e2e',
+          email: 'admin@merqent.com',
+          role: UserRole.PLATFORM_ADMIN,
+          type: 'access',
+        },
+        { secret, expiresIn: '15m' },
+      );
+
+      peFirmAdminToken = await jwtService.signAsync(
+        {
+          sub: 'usr-pe-e2e',
+          email: 'pe@merqent.com',
+          role: UserRole.PE_FIRM_ADMIN,
+          type: 'access',
+        },
+        { secret, expiresIn: '15m' },
+      );
+    });
+
+    it('denies unauthenticated requests to /metrics with HTTP 401 Unauthorized', async () => {
+      const res = await fetch(`${baseUrl}/metrics`);
+      expect(res.status).toBe(401);
+      const body = (await res.json()) as ErrorResponseBody;
+      expect(body.errorCode).toBe(ErrorCode.UNAUTHORIZED);
+    });
+
+    it('denies requests with invalid x-metrics-key with HTTP 401 Unauthorized', async () => {
+      const res = await fetch(`${baseUrl}/metrics`, {
+        headers: { 'x-metrics-key': 'invalid-scraper-key' },
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('denies requests with authenticated non-admin user (PE_FIRM_ADMIN) with HTTP 403 Forbidden', async () => {
+      const res = await fetch(`${baseUrl}/metrics`, {
+        headers: { authorization: `Bearer ${peFirmAdminToken}` },
+      });
+      expect(res.status).toBe(403);
+      const body = (await res.json()) as ErrorResponseBody;
+      expect(body.errorCode).toBe(ErrorCode.FORBIDDEN);
+    });
+
+    it('allows access with valid x-metrics-key (M2M Scraper) returning metrics snapshot', async () => {
+      const res = await fetch(`${baseUrl}/metrics`, {
+        headers: { 'x-metrics-key': SCRAPER_KEY },
+      });
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as { requests: unknown; uptimeSeconds: unknown };
+      expect(data.requests).toBeDefined();
+      expect(data.uptimeSeconds).toBeDefined();
+    });
+
+    it('allows access with valid Bearer token matching METRICS_SCRAPE_KEY returning Prometheus format', async () => {
+      const res = await fetch(`${baseUrl}/metrics?format=prometheus`, {
+        headers: { authorization: `Bearer ${SCRAPER_KEY}` },
+      });
+      expect(res.status).toBe(200);
+      const text = await res.text();
+      expect(text).toContain('# HELP http_requests_total');
+    });
+
+    it('allows access with valid PLATFORM_ADMIN JWT token returning JSON metrics', async () => {
+      const res = await fetch(`${baseUrl}/metrics`, {
+        headers: { authorization: `Bearer ${platformAdminToken}` },
+      });
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as { requests: unknown; memoryBytes: unknown };
+      expect(data.requests).toBeDefined();
+      expect(data.memoryBytes).toBeDefined();
+    });
+
+    it('preserves unauthenticated public access to health endpoints (/health, /health/ready)', async () => {
+      const healthRes = await fetch(`${baseUrl}/health`);
+      expect(healthRes.status).toBe(200);
+      const readyRes = await fetch(`${baseUrl}/health/ready`);
+      expect(readyRes.status).toBe(200);
     });
   });
 });

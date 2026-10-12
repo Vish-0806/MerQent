@@ -56,6 +56,7 @@ export interface AppConfiguration {
     logLevel: string;
     sentryDsn?: string;
     otelEndpoint?: string;
+    metricsScrapeKey?: string;
   };
   cors: {
     origin: string;
@@ -121,6 +122,7 @@ export default (): AppConfiguration => {
       logLevel: env.LOG_LEVEL,
       sentryDsn: env.SENTRY_DSN || undefined,
       otelEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT || undefined,
+      metricsScrapeKey: env.METRICS_SCRAPE_KEY || undefined,
     },
     cors: {
       origin: env.WEB_APP_URL,

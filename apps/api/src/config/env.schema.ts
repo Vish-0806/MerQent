@@ -74,6 +74,7 @@ export const envConfigSchema = z.object({
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error', 'silent']).default('debug'),
   SENTRY_DSN: z.string().optional().default(''),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional().default(''),
+  METRICS_SCRAPE_KEY: z.string().optional().default(''),
 });
 
 export type EnvConfig = z.infer<typeof envConfigSchema>;

@@ -356,6 +356,39 @@ assert(
 const sanitized = sanitizeDatabaseUrl('postgresql://admin:super_secret_password@localhost:5432/db');
 assert(!sanitized.includes('super_secret_password'), 'Sanitizer redacts database passwords');
 
+// 9. Observability & Metrics Access Restriction
+console.log('\n▶ Category 9: Observability & Metrics Access Restriction');
+const metricsGuardPath = path.join(apiSrcDir, 'infrastructure/observability/metrics-auth.guard.ts');
+assert(fs.existsSync(metricsGuardPath), 'MetricsAuthGuard exists');
+const metricsGuardContent = fs.readFileSync(metricsGuardPath, 'utf8');
+assert(
+  metricsGuardContent.includes('timingSafeEqual'),
+  'MetricsAuthGuard uses timingSafeEqual for constant-time scraper key comparison',
+);
+assert(
+  metricsGuardContent.includes('PLATFORM_ADMIN'),
+  'MetricsAuthGuard restricts JWT access strictly to PLATFORM_ADMIN role',
+);
+assert(
+  metricsGuardContent.includes('METRICS_SCRAPE_KEY'),
+  'MetricsAuthGuard supports configurable METRICS_SCRAPE_KEY',
+);
+assert(
+  envExampleContent.includes('METRICS_SCRAPE_KEY'),
+  '.env.example declares METRICS_SCRAPE_KEY',
+);
+
+const metricsControllerPath = path.join(
+  apiSrcDir,
+  'infrastructure/observability/metrics.controller.ts',
+);
+assert(fs.existsSync(metricsControllerPath), 'MetricsController exists');
+const metricsControllerContent = fs.readFileSync(metricsControllerPath, 'utf8');
+assert(
+  metricsControllerContent.includes('@UseGuards(MetricsAuthGuard)'),
+  'MetricsController is protected with @UseGuards(MetricsAuthGuard)',
+);
+
 console.log('\n═══════════════════════════════════════════════════════════════════');
 console.log(`  RESULTS: ${passCount} Passed, ${failCount} Failed`);
 console.log('═══════════════════════════════════════════════════════════════════\n');
