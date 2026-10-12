@@ -46,6 +46,18 @@ describe('End-to-End API Workflows & Health Probes', () => {
   let mockScanner: ReturnType<typeof createMockMalwareScanner>;
 
   beforeAll(async () => {
+    process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+    process.env.DATABASE_URL =
+      process.env.DATABASE_URL ||
+      'postgresql://merqent_user:merqent_dev_password@localhost:5432/merqent_db?schema=public';
+    process.env.JWT_ACCESS_SECRET =
+      process.env.JWT_ACCESS_SECRET ||
+      'replace_with_minimum_64_character_cryptographically_secure_random_key';
+    process.env.JWT_REFRESH_SECRET =
+      process.env.JWT_REFRESH_SECRET ||
+      'replace_with_minimum_64_character_cryptographically_secure_random_key';
+    process.env.STORAGE_DRIVER = process.env.STORAGE_DRIVER || 'local';
+
     mockPrisma = createMockPrismaService();
     mockRedis = createMockRedisService();
     mockStorage = createMockStorageService();
