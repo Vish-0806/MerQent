@@ -209,17 +209,6 @@ const { BASELINE_TRACKED_ADVISORIES, evaluateAuditGate } = require(
 assert(Array.isArray(BASELINE_TRACKED_ADVISORIES), 'BASELINE_TRACKED_ADVISORIES exported');
 assert(typeof evaluateAuditGate === 'function', 'evaluateAuditGate evaluator function exported');
 
-const auditReportPath = path.join(rootDir, 'reports/security-audit-report.json');
-assert(fs.existsSync(auditReportPath), 'Security audit report artifact exists');
-if (fs.existsSync(auditReportPath)) {
-  const auditReport = JSON.parse(fs.readFileSync(auditReportPath, 'utf-8'));
-  assert(auditReport.vulnerabilities.critical === 0, 'Active critical vulnerabilities count is 0');
-  const activeIds = auditReport.advisories.map((a) => a.id);
-  assert(!activeIds.includes('GHSA-p293-qw3h-jr36'), 'GHSA-p293-qw3h-jr36 is absent');
-  assert(!activeIds.includes('GHSA-2xp9-vwfh-vxw4'), 'GHSA-2xp9-vwfh-vxw4 is absent');
-  assert(!activeIds.includes('GHSA-89xv-2m56-2m9x'), 'GHSA-89xv-2m56-2m9x is absent');
-}
-
 // Behavioral verification: gate fails on untracked or critical finding
 const mockUntracked = {
   metadata: { vulnerabilities: { critical: 0, high: 1, moderate: 0, low: 0 } },
@@ -229,6 +218,25 @@ assert(
   evaluateAuditGate(mockUntracked, BASELINE_TRACKED_ADVISORIES).isPassing === false,
   'Audit gate fails closed on untracked vulnerabilities',
 );
+
+const mockCritical = {
+  metadata: { vulnerabilities: { critical: 1, high: 0, moderate: 0, low: 0 } },
+  advisories: { 1: { id: 'GHSA-p293-qw3h-jr36', severity: 'critical' } },
+};
+assert(
+  evaluateAuditGate(mockCritical, BASELINE_TRACKED_ADVISORIES).isPassing === false,
+  'Audit gate fails closed on critical vulnerabilities',
+);
+
+const auditReportPath = path.join(rootDir, 'reports/security-audit-report.json');
+if (fs.existsSync(auditReportPath)) {
+  const auditReport = JSON.parse(fs.readFileSync(auditReportPath, 'utf-8'));
+  assert(auditReport.vulnerabilities.critical === 0, 'Active critical vulnerabilities count is 0');
+  const activeIds = auditReport.advisories.map((a) => a.id);
+  assert(!activeIds.includes('GHSA-p293-qw3h-jr36'), 'GHSA-p293-qw3h-jr36 is absent');
+  assert(!activeIds.includes('GHSA-2xp9-vwfh-vxw4'), 'GHSA-2xp9-vwfh-vxw4 is absent');
+  assert(!activeIds.includes('GHSA-89xv-2m56-2m9x'), 'GHSA-89xv-2m56-2m9x is absent');
+}
 
 console.log('\n═══════════════════════════════════════════════════════════════════');
 console.log(`  RESULTS: ${passCount} Passed, ${failCount} Failed`);

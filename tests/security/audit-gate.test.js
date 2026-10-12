@@ -108,6 +108,13 @@ runTest('Audit gate FAILS on CRITICAL advisory even if placed in tracked list', 
 // 4. Verify unresolved findings are reported as active in security-audit-report.json
 runTest('Unresolved findings remain actively cataloged in generated report artifact', () => {
   const reportPath = path.join(__dirname, '../../reports/security-audit-report.json');
+  if (!fs.existsSync(reportPath)) {
+    const { execSync } = require('child_process');
+    execSync('node scripts/testing/audit-report.js', {
+      cwd: path.resolve(__dirname, '../..'),
+      stdio: 'ignore',
+    });
+  }
   assert(fs.existsSync(reportPath), 'security-audit-report.json must exist');
   const report = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
 
