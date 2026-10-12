@@ -273,6 +273,22 @@ describe('End-to-End API Workflows & Health Probes', () => {
       expect(res.status).toBe(401);
     });
 
+    it('denies requests with scraper keys of various lengths (shorter, longer, empty) with HTTP 401 without 500', async () => {
+      const candidates = [
+        'a',
+        'short',
+        SCRAPER_KEY.slice(0, 10),
+        SCRAPER_KEY + '-extended-suffix',
+        'x'.repeat(256),
+      ];
+      for (const candidate of candidates) {
+        const res = await fetch(`${baseUrl}/metrics`, {
+          headers: { 'x-metrics-key': candidate },
+        });
+        expect(res.status).toBe(401);
+      }
+    });
+
     it('denies requests with authenticated non-admin user (PE_FIRM_ADMIN) with HTTP 403 Forbidden', async () => {
       const res = await fetch(`${baseUrl}/metrics`, {
         headers: { authorization: `Bearer ${peFirmAdminToken}` },

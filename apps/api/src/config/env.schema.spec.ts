@@ -108,4 +108,64 @@ describe('Environment Configuration Validation (Task 2.2)', () => {
     expect(thrownMessage).toContain('JWT_ACCESS_SECRET');
     expect(thrownMessage).not.toContain(secretValue);
   });
+
+  describe('METRICS_SCRAPE_KEY Production Validation (Task 2.R4-V)', () => {
+    it('should allow missing or empty METRICS_SCRAPE_KEY in development and test environments', () => {
+      const devEnv = { ...validBaseEnv, NODE_ENV: 'development', METRICS_SCRAPE_KEY: '' };
+      const configDev = validateEnv(devEnv);
+      expect(configDev.METRICS_SCRAPE_KEY).toBe('');
+
+      const testEnv = { ...validBaseEnv, NODE_ENV: 'test', METRICS_SCRAPE_KEY: 'short' };
+      const configTest = validateEnv(testEnv);
+      expect(configTest.METRICS_SCRAPE_KEY).toBe('short');
+    });
+
+    it('should allow missing or empty METRICS_SCRAPE_KEY in production (monitoring fails closed by default)', () => {
+      const prodEnvEmpty = { ...validBaseEnv, NODE_ENV: 'production', METRICS_SCRAPE_KEY: '' };
+      const config = validateEnv(prodEnvEmpty);
+      expect(config.METRICS_SCRAPE_KEY).toBe('');
+    });
+
+    it('should allow valid >= 32 character METRICS_SCRAPE_KEY in production', () => {
+      const validKey = 'production_monitoring_key_at_least_32_characters_long!';
+      const prodEnvValid = {
+        ...validBaseEnv,
+        NODE_ENV: 'production',
+        METRICS_SCRAPE_KEY: validKey,
+      };
+      const config = validateEnv(prodEnvValid);
+      expect(config.METRICS_SCRAPE_KEY).toBe(validKey);
+    });
+
+    it('should fail validation in production when METRICS_SCRAPE_KEY is shorter than 32 characters', () => {
+      const prodEnvWeak = {
+        ...validBaseEnv,
+        NODE_ENV: 'production',
+        METRICS_SCRAPE_KEY: 'weak_short_key_123',
+      };
+
+      expect(() => validateEnv(prodEnvWeak)).toThrow(
+        'METRICS_SCRAPE_KEY must be at least 32 characters long in production',
+      );
+    });
+
+    it('should never leak attempted METRICS_SCRAPE_KEY secret value in validation error messages', () => {
+      const sensitiveScrapeKey = 'leaked_weak_scrape_key_123';
+      const prodEnvWeak = {
+        ...validBaseEnv,
+        NODE_ENV: 'production',
+        METRICS_SCRAPE_KEY: sensitiveScrapeKey,
+      };
+
+      let thrownMessage = '';
+      try {
+        validateEnv(prodEnvWeak);
+      } catch (err: unknown) {
+        thrownMessage = (err as Error).message;
+      }
+
+      expect(thrownMessage).toContain('METRICS_SCRAPE_KEY');
+      expect(thrownMessage).not.toContain(sensitiveScrapeKey);
+    });
+  });
 });

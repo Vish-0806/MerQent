@@ -374,8 +374,18 @@ assert(
   'MetricsAuthGuard supports configurable METRICS_SCRAPE_KEY',
 );
 assert(
+  metricsGuardContent.includes('isWeakInProduction') || metricsGuardContent.includes('32'),
+  'MetricsAuthGuard validates minimum 32-character key length in production',
+);
+assert(
   envExampleContent.includes('METRICS_SCRAPE_KEY'),
   '.env.example declares METRICS_SCRAPE_KEY',
+);
+const envSchemaPath = path.join(apiSrcDir, 'config/env.schema.ts');
+const envSchemaContent = fs.readFileSync(envSchemaPath, 'utf8');
+assert(
+  envSchemaContent.includes('METRICS_SCRAPE_KEY') && envSchemaContent.includes('32'),
+  'envConfigSchema enforces minimum 32 characters for METRICS_SCRAPE_KEY in production',
 );
 
 const metricsControllerPath = path.join(

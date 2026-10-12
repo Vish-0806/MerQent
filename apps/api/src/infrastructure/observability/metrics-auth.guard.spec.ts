@@ -223,4 +223,94 @@ describe('MetricsAuthGuard (Task 2.R4)', () => {
       );
     });
   });
+
+  describe('Edge Cases: Constant-Time Comparison & Key Length Variations (Task 2.R4-V)', () => {
+    it('rejects keys shorter than target key with HTTP 401 Unauthorized without throwing RangeError or 500', async () => {
+      const shortKeys = ['a', 'ab', '12345', 'short-key', VALID_SCRAPE_KEY.slice(0, 10)];
+      for (const candidate of shortKeys) {
+        const context = createMockContext({ 'x-metrics-key': candidate });
+        await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
+      }
+    });
+
+    it('rejects keys longer than target key with HTTP 401 Unauthorized without throwing RangeError or 500', async () => {
+      const longKeys = [
+        VALID_SCRAPE_KEY + 'x',
+        VALID_SCRAPE_KEY.repeat(2),
+        'a'.repeat(256),
+        'b'.repeat(1024),
+      ];
+      for (const candidate of longKeys) {
+        const context = createMockContext({ 'x-metrics-key': candidate });
+        await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
+      }
+    });
+
+    it('rejects equal-length incorrect candidate key with HTTP 401 Unauthorized', async () => {
+      // Same length as VALID_SCRAPE_KEY but different bytes
+      const equalLengthMismatch = 'x'.repeat(VALID_SCRAPE_KEY.length);
+      const context = createMockContext({ 'x-metrics-key': equalLengthMismatch });
+      await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('accepts correct key and succeeds', async () => {
+      const context = createMockContext({ 'x-metrics-key': VALID_SCRAPE_KEY });
+      const allowed = await guard.canActivate(context);
+      expect(allowed).toBe(true);
+    });
+  });
+
+  describe('Production Secret Validation & Fail-Closed Boundaries (Task 2.R4-V)', () => {
+    it('fails closed with HTTP 401 in production when METRICS_SCRAPE_KEY is weak (< 32 chars)', async () => {
+      (configService.get as jest.Mock).mockImplementation((key: string) => {
+        if (key === 'observability.metricsScrapeKey') return 'weak-key-123';
+        if (key === 'app.nodeEnv') return 'production';
+        return undefined;
+      });
+
+      const context = createMockContext({ 'x-metrics-key': 'weak-key-123' });
+      await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
+      await expect(guard.canActivate(context)).rejects.toThrow(
+        /Machine-to-machine metrics authentication is not configured/i,
+      );
+    });
+
+    it('fails closed with HTTP 401 in production when Bearer matches weak configured key (< 32 chars)', async () => {
+      (configService.get as jest.Mock).mockImplementation((key: string) => {
+        if (key === 'observability.metricsScrapeKey') return 'weak-key-123';
+        if (key === 'app.nodeEnv') return 'production';
+        return undefined;
+      });
+
+      // Bearer token matches configured key, but key is weak in production -> fails closed
+      const context = createMockContext({ authorization: 'Bearer weak-key-123' });
+      await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('fails closed in production when METRICS_SCRAPE_KEY is missing or empty', async () => {
+      (configService.get as jest.Mock).mockImplementation((key: string) => {
+        if (key === 'observability.metricsScrapeKey') return '';
+        if (key === 'app.nodeEnv') return 'production';
+        return undefined;
+      });
+
+      const context = createMockContext({ 'x-metrics-key': VALID_SCRAPE_KEY });
+      await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
+      await expect(guard.canActivate(context)).rejects.toThrow(
+        /Machine-to-machine metrics authentication is not configured/i,
+      );
+    });
+
+    it('succeeds in production when valid 32+ character METRICS_SCRAPE_KEY is configured and provided', async () => {
+      (configService.get as jest.Mock).mockImplementation((key: string) => {
+        if (key === 'observability.metricsScrapeKey') return VALID_SCRAPE_KEY;
+        if (key === 'app.nodeEnv') return 'production';
+        return undefined;
+      });
+
+      const context = createMockContext({ 'x-metrics-key': VALID_SCRAPE_KEY });
+      const allowed = await guard.canActivate(context);
+      expect(allowed).toBe(true);
+    });
+  });
 });

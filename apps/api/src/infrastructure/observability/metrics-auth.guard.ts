@@ -50,6 +50,17 @@ export class MetricsAuthGuard implements CanActivate {
       process.env.METRICS_SCRAPE_KEY ||
       '';
 
+    const nodeEnv =
+      this.configService.get<string>('app.nodeEnv') || process.env.NODE_ENV || 'development';
+
+    // In production, enforce minimum 32 characters if configured; fail closed if weak
+    const isWeakInProduction =
+      nodeEnv === 'production' &&
+      configuredScrapeKey.trim() !== '' &&
+      configuredScrapeKey.trim().length < 32;
+
+    const isScraperKeyConfigured = configuredScrapeKey.trim() !== '' && !isWeakInProduction;
+
     const headerKey = request.headers['x-metrics-key'];
     const authHeader = request.headers['authorization'];
 
@@ -62,6 +73,15 @@ export class MetricsAuthGuard implements CanActivate {
       if (!configuredScrapeKey || configuredScrapeKey.trim() === '') {
         this.logger.warn(
           'M2M metrics scraper authentication rejected: METRICS_SCRAPE_KEY is not configured on server',
+        );
+        throw new UnauthorizedException(
+          'Machine-to-machine metrics authentication is not configured on this server',
+        );
+      }
+
+      if (isWeakInProduction) {
+        this.logger.warn(
+          'M2M metrics scraper authentication rejected: METRICS_SCRAPE_KEY is weak (< 32 characters) in production',
         );
         throw new UnauthorizedException(
           'Machine-to-machine metrics authentication is not configured on this server',
@@ -92,11 +112,7 @@ export class MetricsAuthGuard implements CanActivate {
     }
 
     // 2A: Check if Bearer token matches configured M2M scrape key
-    if (
-      configuredScrapeKey &&
-      configuredScrapeKey.trim() !== '' &&
-      this.safeCompare(token.trim(), configuredScrapeKey.trim())
-    ) {
+    if (isScraperKeyConfigured && this.safeCompare(token.trim(), configuredScrapeKey.trim())) {
       request.user = {
         id: 'system:metrics-scraper',
         email: 'monitoring@system.local',
@@ -156,12 +172,26 @@ export class MetricsAuthGuard implements CanActivate {
 
   /**
    * Constant-time string comparison to prevent timing attacks on scraper tokens.
+   * Compares equal-length buffers using crypto.timingSafeEqual.
+   * Safely handles different-length, empty, or malformed inputs without throwing exceptions
+   * or leaking timing information.
    */
-  private safeCompare(a: string, b: string): boolean {
-    if (!a || !b) return false;
-    const bufA = Buffer.from(a, 'utf8');
-    const bufB = Buffer.from(b, 'utf8');
-    if (bufA.length !== bufB.length) return false;
-    return crypto.timingSafeEqual(bufA, bufB);
+  private safeCompare(candidate: string, target: string): boolean {
+    if (!candidate || !target) return false;
+    try {
+      const bufCandidate = Buffer.from(candidate, 'utf8');
+      const bufTarget = Buffer.from(target, 'utf8');
+
+      if (bufCandidate.length !== bufTarget.length) {
+        // Run dummy timingSafeEqual against target buffer to equalize timing profile
+        // and prevent length-oracle timing side-channels
+        crypto.timingSafeEqual(bufTarget, bufTarget);
+        return false;
+      }
+
+      return crypto.timingSafeEqual(bufCandidate, bufTarget);
+    } catch {
+      return false;
+    }
   }
 }
