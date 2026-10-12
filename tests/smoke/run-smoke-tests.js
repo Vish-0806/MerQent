@@ -201,6 +201,12 @@ assert(
 );
 assert(
   fs.existsSync(
+    path.join(apiSrcDir, 'test-integration/malware-scanner-real-daemon.integration.spec.ts'),
+  ),
+  'ClamAV real daemon live integration test suite exists',
+);
+assert(
+  fs.existsSync(
     path.join(apiSrcDir, 'test-integration/security-tenant-isolation.integration.spec.ts'),
   ),
   'Security tenant isolation test suite exists',

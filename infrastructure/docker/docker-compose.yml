@@ -76,6 +76,8 @@ services:
     restart: unless-stopped
     environment:
       CLAMAV_NO_FRESHCLAM: "true"
+    volumes:
+      - clamav_data:/var/lib/clamav
     ports:
       - "${CLAMAV_PORT:-3310}:3310"
     healthcheck:
@@ -89,3 +91,4 @@ volumes:
   postgres_data:
   redis_data:
   minio_data:
+  clamav_data:

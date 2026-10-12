@@ -86,7 +86,9 @@ services:
     container_name: merqent_clamav
     restart: unless-stopped
     environment:
-      CLAMAV_NO_FRESHCLAM: "true"
+      CLAMAV_NO_FRESHCLAM: "false"
+    volumes:
+      - clamav_data:/var/lib/clamav
     ports:
       - "${CLAMAV_PORT:-3310}:3310"
     healthcheck:
@@ -190,3 +192,4 @@ volumes:
   postgres_data:
   redis_data:
   minio_data:
+  clamav_data:
